@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block head %}
+    <meta http-equiv="refresh" content="2;url=/streams"/>
+{% end %}
+{% block content %}
+    {% for client in clients %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h4 class="card-title">{{ client.identifier }}</h4>
+                    {% if is_admin %}
+                        <h6 class="card-subtitle mb-2 text-muted">Latenz: {{ client.latency }}</h6>
+                    {% end %}
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if not client.connected %}
+                        <div class="list-group-item list-group-item-danger">
+                            Nicht verbunden
+                        </div>
+                    {% else %}
+                        {% for stream in server.streams %}
+                            <a href="/client?id={{ client.identifier }}&action=set_stream&stream={{ stream.identifier }}"
+                               class="list-group-item list-group-item-action{% if client.group and client.group.stream == stream.identifier %} active{% end %}">
+                                {% if stream.status == 'idle' %}
+                                <i class="fas fa-power-off"></i>
+                                {% elif stream.status == 'playing' %}
+                                <i class="fas fa-music"></i>
+                                {% else %}
+                                {{ stream.status }}
+                                {% end %}
+                                {{ stream.friendly_name }}
+                            </a>
+                        {% end %}
+                    {% end %}
+                </div>
+                <div class="card-body">
+                    {% if client.connected %}
+                        {% if client.muted %}
+                            <a href="/client?id={{client.identifier}}&action=unmute" class="card-link">Ton einschalten</a>
+                        {% else %}
+                            <a href="/client?id={{client.identifier}}&action=mute" class="card-link">Ton ausschalten</a>
+                        {% end %}
+                    {% elif is_admin %}
+                        <a href="/client?id={{client.identifier}}&action=delete" class="card-link text-danger">Löschen</a>
+                    {% end %}
+                </div>
+                {% if is_admin %}
+                    <div class="card-body">
+                        <form method="get" action="/client">
+                            <div>
+                                <input type="hidden" name="id" value="{{ client.identifier }}">
+                                <input type="hidden" name="action" value="set_latency">
+                                <div class="input-group">
+                                    <input type="number" min="0" name="latency" value="{{ client.latency }}" class="form-control" placeholder="Latenz" aria-label="Latenz">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-secondary" type="submit">Speichern</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                {% end %}
+            </div>
+        </div>
+    {% end %}
+{% end %}
