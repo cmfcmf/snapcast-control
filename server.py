@@ -1,4 +1,5 @@
 import json
+import argparse
 
 import tornado.ioloop
 import tornado.gen
@@ -98,17 +99,21 @@ class ClientSettingsHandler(BaseHandler):
         self.redirect('/streams')
 
 
-def make_app():
+def make_app(debug):
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/streams", StreamsHandler),
         (r"/client", ClientSettingsHandler),
         (r"/browse", BrowseHandler),
         (r"/play", PlayHandler),
-    ], debug=True)
+    ], debug=debug)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Snapcast control')
+    parser.add_argument("--debug", help="run tornado in debug mode", action="store_true")
+    args = parser.parse_args()
+
     AsyncIOMainLoop().install()
     ioloop = asyncio.get_event_loop()
 
@@ -117,6 +122,6 @@ if __name__ == "__main__":
 
     http_client = AsyncHTTPClient()
 
-    app = make_app()
-    app.listen(8083)
+    app = make_app(args.debug)
+    app.listen(8080)
     ioloop.run_forever()
