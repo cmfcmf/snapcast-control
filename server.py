@@ -4,7 +4,7 @@ import tornado.ioloop
 import tornado.gen
 import tornado.web
 from snapcast.control import Snapserver
-from tornado.escape import utf8
+from tornado.escape import to_unicode
 from tornado.escape import url_escape
 from tornado.httpclient import AsyncHTTPClient
 from tornado.platform.asyncio import AsyncIOMainLoop
@@ -35,7 +35,7 @@ class BaseHandler(tornado.web.RequestHandler):
         headers = dict()
         headers['Content-Type'] = 'application/json'
         response = await http_client.fetch(MOPIDY_RPC_URL, method='POST', body=body, headers=headers)
-        return json.loads(utf8(response.body))['result']
+        return json.loads(to_unicode(response.body))['result']
 
 
 class MainHandler(BaseHandler):
