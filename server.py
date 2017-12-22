@@ -12,9 +12,6 @@ from tornado.platform.asyncio import AsyncIOMainLoop
 import asyncio
 from functools import reduce
 
-SNAPSERVER_HOST = 'musik.local'
-MOPIDY_RPC_URL = 'http://musik.local:6680/mopidy/rpc'
-
 
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self):
@@ -112,7 +109,12 @@ def make_app(debug):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Snapcast control')
     parser.add_argument("--debug", help="run tornado in debug mode", action="store_true")
+    parser.add_argument("--host", help="music host", default='127.0.0.1')
     args = parser.parse_args()
+
+    HOST = args.host
+    SNAPSERVER_HOST = HOST
+    MOPIDY_RPC_URL = 'http://{}:6680/mopidy/rpc'.format(HOST)
 
     AsyncIOMainLoop().install()
     ioloop = asyncio.get_event_loop()
