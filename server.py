@@ -69,7 +69,7 @@ class PlayHandler(BaseHandler):
 
 class StreamsHandler(BaseHandler):
     def get(self):
-        self.render("streams.html", title="Streams", clients=server.clients, server=server)
+        self.render("streams.html", title="Streams", clients=sorted(server.clients, key=lambda client: client.identifier), server=server)
 
 
 class ClientSettingsHandler(BaseHandler):
