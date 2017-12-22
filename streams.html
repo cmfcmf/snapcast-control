@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% block head %}
-    <meta http-equiv="refresh" content="2;url=/streams"/>
+    {% if not is_admin %}
+        <meta http-equiv="refresh" content="2;url=/streams"/>
+    {% end %}
 {% end %}
 {% block content %}
     {% for client in clients %}
