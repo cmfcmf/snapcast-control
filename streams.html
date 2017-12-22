@@ -18,7 +18,7 @@
                             Nicht verbunden
                         </div>
                     {% else %}
-                        {% for stream in server.streams %}
+                        {% for stream in sorted(server.streams, key=lambda stream: stream.friendly_name) %}
                             <a href="/client?id={{ client.identifier }}&action=set_stream&stream={{ stream.identifier }}"
                                class="list-group-item list-group-item-action{% if client.group and client.group.stream == stream.identifier %} active{% end %}">
                                 {% if stream.status == 'idle' %}
