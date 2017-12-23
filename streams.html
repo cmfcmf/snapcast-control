@@ -5,7 +5,7 @@
     {% end %}
 {% end %}
 {% block content %}
-    {% for client in clients %}
+    {% for client in sorted(clients, key=lambda client: client.connected, reverse=True) %}
         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
             <div class="card mb-2">
                 <div class="card-body">
@@ -22,7 +22,7 @@
                     {% else %}
                         {% for stream in sorted(server.streams, key=lambda stream: stream.friendly_name) %}
                             <a href="/client?id={{ client.identifier }}&action=set_stream&stream={{ stream.identifier }}"
-                               class="list-group-item list-group-item-action{% if client.group and client.group.stream == stream.identifier %} active{% end %}">
+                               class="list-group-item list-group-item-action{% if client.group and client.group.stream == stream.identifier %} active{% end %}{% if client.identifier == stream.friendly_name.split(' ')[0] %} list-group-item-info{% end %}">
                                 {% if stream.status == 'idle' %}
                                 <i class="fas fa-power-off"></i>
                                 {% elif stream.status == 'playing' %}
