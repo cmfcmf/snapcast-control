@@ -20,18 +20,20 @@
                             Nicht verbunden
                         </div>
                     {% else %}
-                        {% for stream in sorted(server.streams, key=lambda stream: stream.friendly_name) %}
-                            <a href="/client?id={{ client.identifier }}&action=set_stream&stream={{ stream.identifier }}"
-                               class="list-group-item list-group-item-action{% if client.group and client.group.stream == stream.identifier %} active{% end %}{% if client.identifier == stream.friendly_name.split(' ')[0] %} list-group-item-info{% end %}">
-                                {% if stream.status == 'idle' %}
-                                <i class="fas fa-power-off"></i>
-                                {% elif stream.status == 'playing' %}
-                                <i class="fas fa-music"></i>
-                                {% else %}
-                                {{ stream.status }}
-                                {% end %}
-                                {{ stream.friendly_name }}
-                            </a>
+                        {% for stream in sorted(server.streams, key=lambda stream: (not stream.friendly_name.startswith(client.identifier), stream.friendly_name)) %}
+                            {% if stream.status == 'playing' or (client.group and client.group.stream == stream.identifier) or stream.friendly_name.startswith(client.identifier) %}
+                                <a href="/client?id={{ client.identifier }}&action=set_stream&stream={{ stream.identifier }}"
+                                   class="list-group-item list-group-item-action{% if client.group and client.group.stream == stream.identifier %} active{% end %}{% if stream.friendly_name.startswith(client.identifier) %} list-group-item-info{% end %}">
+                                    {% if stream.status == 'idle' %}
+                                        <i class="fas fa-power-off"></i>
+                                    {% elif stream.status == 'playing' %}
+                                        <i class="fas fa-music"></i>
+                                    {% else %}
+                                        {{ stream.status }}
+                                    {% end %}
+                                    {{ stream.friendly_name }}
+                                </a>
+                            {% end %}
                         {% end %}
                     {% end %}
                 </div>
@@ -46,6 +48,13 @@
                         <a href="/client?id={{client.identifier}}&action=delete" class="card-link text-danger">Löschen</a>
                     {% end %}
                 </div>
+                {% set mopidy_server = list(filter(lambda mopidy_server: mopidy_server.name.startswith(client.identifier + ' Lokal'), mopidy_servers)) %}
+                {% set mopidy_server = mopidy_server[0] if len(mopidy_server) > 0 else None %}
+                {% if mopidy_server is not None %}
+                    <div class="card-body">
+                        <a href="/browse?name={{ url_escape(mopidy_server.name) }}" class="card-link">Lokale Musik ändern</a>
+                    </div>
+                {% end %}
                 {% if is_admin %}
                     <div class="card-body">
                         <form method="get" action="/client">
