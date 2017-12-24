@@ -35,11 +35,12 @@
 <div class="container">
     {% if not connected %}
         <div class="alert alert-danger">Verbindung zum Musikserver verloren!</div>
+    {% else %}
+        <div class="row">
+            {% block content %}
+            {% end %}
+        </div>
     {% end %}
-    <div class="row">
-        {% block content %}
-        {% end %}
-    </div>
 </div>
 
 <!-- Optional JavaScript -->

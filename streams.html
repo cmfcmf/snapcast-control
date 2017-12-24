@@ -52,7 +52,7 @@
                 {% end %}
                 {% set mopidy_server = list(filter(lambda mopidy_server: mopidy_server.name.startswith(client.identifier + ' Lokal'), mopidy_servers)) %}
                 {% set mopidy_server = mopidy_server[0] if len(mopidy_server) > 0 else None %}
-                {% if mopidy_server is not None %}
+                {% if client.connected and mopidy_server is not None %}
                     <div class="card-body">
                         <a href="/browse?name={{ url_escape(mopidy_server.name) }}" class="card-link">Lokale Musik ändern</a>
                     </div>
