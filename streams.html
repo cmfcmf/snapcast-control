@@ -20,7 +20,7 @@
                             Nicht verbunden
                         </div>
                     {% else %}
-                        {% for stream in sorted(server.streams, key=lambda stream: (not stream.friendly_name.startswith(client.identifier), stream.friendly_name)) %}
+                        {% for stream in sorted(server.streams, key=lambda stream: (stream.status != 'playing', not stream.friendly_name.startswith(client.identifier), stream.friendly_name)) %}
                             {% if stream.status == 'playing' or (client.group and client.group.stream == stream.identifier) or stream.friendly_name.startswith(client.identifier) %}
                                 <a href="/client?id={{ client.identifier }}&action=set_stream&stream={{ stream.identifier }}"
                                    class="list-group-item list-group-item-action{% if client.group and client.group.stream == stream.identifier %} active{% end %}{% if stream.friendly_name.startswith(client.identifier) %} list-group-item-info{% end %}">
