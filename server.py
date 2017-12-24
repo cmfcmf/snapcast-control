@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
         def remove_service(self, zeroconf, type, name):
             global mopidy_servers
-            mopidy_servers = list(filter(lambda mopidy_server: mopidy_server.name == name, mopidy_servers))
+            mopidy_servers = list(filter(lambda mopidy_server: mopidy_server.name != name, mopidy_servers))
 
 
     class SnapListener:
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
         def remove_service(self, zeroconf, type, name):
             global snap_servers
-            snap_servers = list(filter(lambda snap_server: snap_server.name == name, snap_servers))
+            snap_servers = list(filter(lambda snap_server: snap_server.name != name, snap_servers))
 
     zeroconf = Zeroconf()
     zeroconf.add_service_listener('_mopidy-http._tcp.local.', MopidyListener())
