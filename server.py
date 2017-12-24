@@ -4,6 +4,7 @@ import argparse
 import sys
 import time
 import logging
+import os
 
 import tornado.ioloop
 import tornado.gen
@@ -127,6 +128,7 @@ def make_app(debug):
         (r"/client", ClientSettingsHandler),
         (r"/browse", BrowseHandler),
         (r"/play", PlayHandler),
+        (r"/(.*)", tornado.web.StaticFileHandler, {'path': (os.path.join(os.path.dirname(__file__), 'static'))}),
     ], debug=debug)
 
 
