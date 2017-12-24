@@ -2,6 +2,7 @@ import json
 import argparse
 import sys
 import time
+import logging
 
 import tornado.ioloop
 import tornado.gen
@@ -112,7 +113,7 @@ class ClientSettingsHandler(BaseHandler):
             stream_id = self.get_argument('stream')
             yield from client.group.set_stream(stream_id)
         else:
-            print('Unknown action!')
+            logging.error('Unknown action!')
             pass
 
         self.redirect('/streams?is_admin=1' if is_admin else '/streams')
@@ -131,7 +132,10 @@ def make_app(debug):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Snapcast control')
     parser.add_argument("--debug", help="run tornado in debug mode", action="store_true")
+    parser.add_argument("--loglevel", help="loglevel", default='DEBUG')
     args = parser.parse_args()
+
+    logging.basicConfig(level=getattr(logging, args.loglevel.upper()))
 
     snap_servers = []
     mopidy_servers = []
@@ -140,11 +144,12 @@ if __name__ == "__main__":
 
         def add_service(self, zeroconf, type, name):
             info = zeroconf.get_service_info(type, name)
-            print("Service %s added, service info: %s" % (name, info))
+            logging.debug("Service %s added, service info: %s" % (name, info))
             global mopidy_servers
             mopidy_servers.append(info)
 
         def remove_service(self, zeroconf, type, name):
+            logging.warning("Service %s removed" % name)
             global mopidy_servers
             mopidy_servers = list(filter(lambda mopidy_server: mopidy_server.name != name, mopidy_servers))
 
@@ -152,36 +157,43 @@ if __name__ == "__main__":
     class SnapListener:
         def add_service(self, zeroconf, type, name):
             info = zeroconf.get_service_info(type, name)
-            print("Service %s added, service info: %s" % (name, info))
+            logging.debug("Service %s added, service info: %s" % (name, info))
             global snap_servers
             snap_servers.append(info)
 
         def remove_service(self, zeroconf, type, name):
+            logging.warning("Service %s removed" % name)
             global snap_servers
             snap_servers = list(filter(lambda snap_server: snap_server.name != name, snap_servers))
 
     zeroconf = Zeroconf()
     zeroconf.add_service_listener('_mopidy-http._tcp.local.', MopidyListener())
+    # TODO: This should use _snapcast-jsonrpc._tcp.local.
+    #       However, this name does not comply with https://tools.ietf.org/html/rfc6763#section-7.2
+    #       and is therefore rejected by the zeroconf library.
     zeroconf.add_service_listener('_snapcast._tcp.local.', SnapListener())
 
-    print("Discovering services")
+    logging.info("Discovering services")
     while len(snap_servers) == 0:
         time.sleep(0.1)
 
     if len(snap_servers) != 1:
-        print("Exactly 1 snapserver expected, found {}.".format(len(snap_servers)))
+        logging.error("Exactly 1 snapserver expected, found {}.".format(len(snap_servers)))
         sys.exit(1)
-
-    SNAPSERVER_HOST = snap_servers[0].server
+    snap_server = snap_servers[0]
 
     AsyncIOMainLoop().install()
     ioloop = asyncio.get_event_loop()
 
-    server = Snapserver(ioloop, SNAPSERVER_HOST, reconnect=True)
+    logging.info("Connecting to snapserver")
+    # TODO: This should also specify port=snap_server.port
+    #       However, we first need to fix the bug above.
+    server = Snapserver(ioloop, host=snap_server.server, reconnect=True)
     ioloop.run_until_complete(server.start())
 
     http_client = AsyncHTTPClient()
 
+    logging.info("Starting web app")
     app = make_app(args.debug)
     app.listen(8080)
     ioloop.run_forever()
