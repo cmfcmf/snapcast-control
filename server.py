@@ -27,6 +27,7 @@ class BaseHandler(tornado.web.RequestHandler):
         namespace = super().get_template_namespace()
         namespace['connected'] = server._protocol is not None
         namespace['is_admin'] = self.get_argument('is_admin', False)
+        namespace['debug'] = self.get_argument('debug', False)
         return namespace
 
     async def mopidy_rpc_request(self, server_name, method, params={}):
@@ -49,11 +50,6 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def get_mopidy_server_from_name(self, name):
         return list(filter(lambda mopidy_server: mopidy_server.name == name, mopidy_servers))[0]
-
-
-class MainHandler(BaseHandler):
-    def get(self):
-        self.redirect("/streams")
 
 
 class BrowseHandler(BaseHandler):
@@ -80,7 +76,7 @@ class PlayHandler(BaseHandler):
         yield self.mopidy_rpc_request(name, "core.tracklist.clear")
         tracks = yield self.mopidy_rpc_request(name, "core.tracklist.add", {'uris': uris})
         yield self.mopidy_rpc_request(name, "core.playback.play", {'tlid': tracks[0]['tlid']})
-        self.redirect("/streams")
+        self.redirect("/")
 
 
 class StreamsHandler(BaseHandler):
@@ -118,13 +114,12 @@ class ClientSettingsHandler(BaseHandler):
             logging.error('Unknown action!')
             pass
 
-        self.redirect('/streams?is_admin=1' if is_admin else '/streams')
+        self.redirect('/?is_admin=1' if is_admin else '/')
 
 
 def make_app(debug):
     return tornado.web.Application([
-        (r"/", MainHandler),
-        (r"/streams", StreamsHandler),
+        (r"/", StreamsHandler),
         (r"/client", ClientSettingsHandler),
         (r"/browse", BrowseHandler),
         (r"/play", PlayHandler),

@@ -41,12 +41,15 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                {#<li class="nav-item{% if request.path == '/streams' %} active{% end %}">
-                    <a class="nav-link" href="/streams">Streams</a>
+                {#<li class="nav-item{% if request.path == '/' %} active{% end %}">
+                    <a class="nav-link" href="/">Streams</a>
                 </li>
                 <li class="nav-item{% if request.path == '/browse' %} active{% end %}">
                     <a class="nav-link" href="/browse">Bibliothek</a>
                 </li>#}
+                <li class="nav-item{% if is_admin and request.path == '/' %} active{% end %}">
+                    <a class="nav-link" href="/?is_admin=1">Admin</a>
+                </li>
             </ul>
         </div>
     </div>
