@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import json
 import argparse
 import sys
@@ -133,6 +134,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Snapcast control')
     parser.add_argument("--debug", help="run tornado in debug mode", action="store_true")
     parser.add_argument("--loglevel", help="loglevel", default='DEBUG')
+    parser.add_argument("--port", help="web server port", default=8080, type=int)
     args = parser.parse_args()
 
     logging.basicConfig(level=getattr(logging, args.loglevel.upper()))
@@ -195,5 +197,5 @@ if __name__ == "__main__":
 
     logging.info("Starting web app")
     app = make_app(args.debug)
-    app.listen(8080)
+    app.listen(args.port)
     ioloop.run_forever()
