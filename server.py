@@ -87,7 +87,6 @@ class StreamsHandler(BaseHandler):
             title="Streams",
             clients=sorted(server.clients, key=lambda client: client.identifier),
             server=server,
-            snap_servers=snap_servers,
             mopidy_servers=mopidy_servers,
         )
 
@@ -97,6 +96,7 @@ class ClientSettingsHandler(BaseHandler):
     def get(self):
         client_id = self.get_argument('id')
         action = self.get_argument('action')
+        is_admin = self.get_argument('is_admin', False)
 
         client = server.client(client_id)
         if action == 'mute':
@@ -115,7 +115,7 @@ class ClientSettingsHandler(BaseHandler):
             print('Unknown action!')
             pass
 
-        self.redirect('/streams')
+        self.redirect('/streams?is_admin=1' if is_admin else '/streams')
 
 
 def make_app(debug):

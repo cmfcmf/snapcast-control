@@ -37,17 +37,19 @@
                         {% end %}
                     {% end %}
                 </div>
-                <div class="card-body">
-                    {% if client.connected %}
-                        {% if client.muted %}
-                            <a href="/client?id={{client.identifier}}&action=unmute" class="card-link">Ton einschalten</a>
-                        {% else %}
-                            <a href="/client?id={{client.identifier}}&action=mute" class="card-link">Ton ausschalten</a>
+                {% if client.connected or is_admin %}
+                    <div class="card-body">
+                        {% if client.connected %}
+                            {% if client.muted %}
+                                <a href="/client?id={{client.identifier}}&action=unmute" class="card-link">Ton einschalten</a>
+                            {% else %}
+                                <a href="/client?id={{client.identifier}}&action=mute" class="card-link">Ton ausschalten</a>
+                            {% end %}
+                        {% elif is_admin %}
+                            <a href="/client?id={{client.identifier}}&action=delete" class="card-link text-danger">Löschen</a>
                         {% end %}
-                    {% elif is_admin %}
-                        <a href="/client?id={{client.identifier}}&action=delete" class="card-link text-danger">Löschen</a>
-                    {% end %}
-                </div>
+                    </div>
+                {% end %}
                 {% set mopidy_server = list(filter(lambda mopidy_server: mopidy_server.name.startswith(client.identifier + ' Lokal'), mopidy_servers)) %}
                 {% set mopidy_server = mopidy_server[0] if len(mopidy_server) > 0 else None %}
                 {% if mopidy_server is not None %}
@@ -61,6 +63,7 @@
                             <div>
                                 <input type="hidden" name="id" value="{{ client.identifier }}">
                                 <input type="hidden" name="action" value="set_latency">
+                                <input type="hidden" name="is_admin" value="1">
                                 <div class="input-group">
                                     <input type="number" min="0" name="latency" value="{{ client.latency }}" class="form-control" placeholder="Latenz" aria-label="Latenz">
                                     <span class="input-group-btn">
