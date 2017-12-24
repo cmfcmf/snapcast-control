@@ -77,4 +77,10 @@
             </div>
         </div>
     {% end %}
+    {% if is_admin %}
+        {{ mopidy_servers }}
+        {% for stream in server.streams %}
+            {{ stream._stream }}
+        {% end %}
+    {% end %}
 {% end %}
