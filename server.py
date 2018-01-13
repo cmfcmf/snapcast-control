@@ -59,13 +59,10 @@ class BrowseHandler(BaseHandler):
         name = self.get_argument('name')
 
         items = yield self.mopidy_rpc_request(name, "core.library.browse", {'uri': uri})
-        tracks = list(filter(lambda item: item['type'] == 'track', items))
-        if len(tracks) > 0:
-            track_uris = reduce(lambda uris, track: uris + '&uri=' + url_escape(track['uri']), tracks, '')
-        else:
-            track_uris = False
 
-        self.render("browse.html", title="Musik", items=items, track_uris=track_uris, name=name)
+        self.add_header('Content-Type', 'application/json')
+        self.add_header('Access-Control-Allow-Origin', '*')
+        self.write(json.dumps(items))
 
 
 class PlayHandler(BaseHandler):
@@ -76,18 +73,38 @@ class PlayHandler(BaseHandler):
         yield self.mopidy_rpc_request(name, "core.tracklist.clear")
         tracks = yield self.mopidy_rpc_request(name, "core.tracklist.add", {'uris': uris})
         yield self.mopidy_rpc_request(name, "core.playback.play", {'tlid': tracks[0]['tlid']})
-        self.redirect("/")
+
+        self.add_header('Content-Type', 'application/json')
+        self.add_header('Access-Control-Allow-Origin', '*')
+        self.write('')
 
 
 class StreamsHandler(BaseHandler):
     def get(self):
-        self.render(
-            "streams.html",
-            title="Streams",
-            clients=sorted(server.clients, key=lambda client: client.identifier),
-            server=server,
-            mopidy_servers=mopidy_servers,
-        )
+        self.add_header('Content-Type', 'application/json')
+        self.add_header('Access-Control-Allow-Origin', '*')
+        self.write(json.dumps(list(map(lambda s: {'id': s.identifier, 'status': s.status}, server.streams))))
+
+
+class ClientsHandler(BaseHandler):
+    def get(self):
+        clients = sorted(server.clients, key=lambda client: (client.connected, client.identifier))
+
+        self.add_header('Content-Type', 'application/json')
+        self.add_header('Access-Control-Allow-Origin', '*')
+        self.write(json.dumps(list(map(lambda c: {'id': c.identifier, 'muted': c.muted, 'volume': c.volume, 'name': c.friendly_name, 'latency': c.latency, 'connected': c.connected, 'stream': c.group.stream if c.group else ''}, clients))))
+
+
+class MopidyServersHandler(BaseHandler):
+    def get(self):
+        self.add_header('Content-Type', 'application/json')
+        self.add_header('Access-Control-Allow-Origin', '*')
+        self.write(json.dumps(list(map(lambda s: {'name': s.name}, mopidy_servers))))
+
+
+class MainHandler(BaseHandler):
+    def get(self):
+        self.redirect('/index.html')
 
 
 class ClientSettingsHandler(BaseHandler):
@@ -95,7 +112,6 @@ class ClientSettingsHandler(BaseHandler):
     def get(self):
         client_id = self.get_argument('id')
         action = self.get_argument('action')
-        is_admin = self.get_argument('is_admin', False)
 
         client = server.client(client_id)
         if action == 'mute':
@@ -114,16 +130,21 @@ class ClientSettingsHandler(BaseHandler):
             logging.error('Unknown action!')
             pass
 
-        self.redirect('/?is_admin=1' if is_admin else '/')
+        self.add_header('Content-Type', 'application/json')
+        self.add_header('Access-Control-Allow-Origin', '*')
+        self.write('')
 
 
 def make_app(debug):
     return tornado.web.Application([
-        (r"/", StreamsHandler),
+        (r"/streams.json", StreamsHandler),
+        (r"/clients.json", ClientsHandler),
+        (r"/mopidy_servers.json", MopidyServersHandler),
         (r"/client", ClientSettingsHandler),
-        (r"/browse", BrowseHandler),
+        (r"/browse.json", BrowseHandler),
         (r"/play", PlayHandler),
-        (r"/(.*)", tornado.web.StaticFileHandler, {'path': (os.path.join(os.path.dirname(__file__), 'static'))}),
+        (r"/", MainHandler),
+        (r"/(.*)", tornado.web.StaticFileHandler, {'path': (os.path.join(os.path.dirname(__file__), 'frontend', 'dist'))}),
     ], debug=debug)
 
 
@@ -189,6 +210,18 @@ if __name__ == "__main__":
     #       However, we first need to fix the bug above.
     server = Snapserver(ioloop, host=snap_server.server, reconnect=True)
     ioloop.run_until_complete(server.start())
+
+
+    @asyncio.coroutine
+    def sync_snapserver():
+        while True:
+            logging.info('Synchronizing snapserver')
+            status = yield from server.status()
+            server.synchronize(status)
+            yield from asyncio.sleep(60)
+
+    ioloop.create_task(sync_snapserver())
+
 
     http_client = AsyncHTTPClient()
 

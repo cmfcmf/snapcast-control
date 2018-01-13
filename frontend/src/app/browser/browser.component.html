@@ -1,0 +1,22 @@
+<div class="col">
+  <div class="list-group">
+    <a *ngIf="getTrackUris().length > 0"
+       class="list-group-item list-group-item-action active"
+       href="#"
+       (click)="playUris(getTrackUris())">
+      Alle abspielen
+    </a>
+    <ng-container *ngFor="let item of items">
+      <a *ngIf="item.type === 'track'"
+         href="#" (click)="playUris([item['uri']])"
+         class="list-group-item list-group-item-action">
+        {{ item['name'] }}
+      </a>
+      <a *ngIf="item.type !== 'track'"
+         [routerLink]="['/browse']" [queryParams]="{uri: item['uri'], name: mopidyServerName}"
+         class="list-group-item list-group-item-action">
+        {{ item['name'] }}
+      </a>
+    </ng-container>
+  </div>
+</div>
