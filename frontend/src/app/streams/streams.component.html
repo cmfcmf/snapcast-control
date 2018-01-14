@@ -13,7 +13,7 @@
           <!--{% for stream in sorted(server.streams, key=lambda stream: (stream.status != 'playing', not stream.friendly_name.startswith(client.identifier), stream.friendly_name)) %} -->
           <ng-container *ngFor="let stream of streams">
             <a *ngIf="stream.status == 'playing' || client.stream == stream.id || stream.id.startsWith(client.id)"
-               href="#"
+               href="javascript:void(0)"
                (click)="api.setStream(client, stream)"
                class="list-group-item list-group-item-action"
                [ngClass]="{'active': client.stream == stream.id, 'list-group-item-info': stream.id.startsWith(client.id)}">
@@ -25,11 +25,11 @@
         </div>
       </div>
       <div class="card-body" *ngIf="client.connected || isAdmin">
-        <a href="#" *ngIf="client.connected && client.muted" (click)="api.unmute(client)"
+        <a href="javascript:void(0)" *ngIf="client.connected && client.muted" (click)="api.unmute(client)"
            class="card-link">Ton einschalten</a>
-        <a href="#" *ngIf="client.connected && !client.muted" (click)="api.mute(client)"
+        <a href="javascript:void(0)" *ngIf="client.connected && !client.muted" (click)="api.mute(client)"
            class="card-link">Ton ausschalten</a>
-        <a href="#" *ngIf="isAdmin" (click)="api.delete(client)"
+        <a href="javascript:void(0)" *ngIf="isAdmin" (click)="api.delete(client)"
              class="card-link text-danger">Löschen</a>
       </div>
       <div class="card-body" *ngIf="client.connected && getMopidyServerNameForClient(client) !== null">

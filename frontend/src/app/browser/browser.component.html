@@ -2,13 +2,13 @@
   <div class="list-group">
     <a *ngIf="getTrackUris().length > 0"
        class="list-group-item list-group-item-action active"
-       href="#"
+       href="javascript:void(0)"
        (click)="playUris(getTrackUris())">
       Alle abspielen
     </a>
     <ng-container *ngFor="let item of items">
       <a *ngIf="item.type === 'track'"
-         href="#" (click)="playUris([item['uri']])"
+         href="javascript:void(0)" (click)="playUris([item['uri']])"
          class="list-group-item list-group-item-action">
         {{ item['name'] }}
       </a>
