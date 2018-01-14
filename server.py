@@ -11,30 +11,28 @@ import tornado.gen
 import tornado.web
 from snapcast.control import Snapserver
 from tornado.escape import to_unicode
-from tornado.escape import url_escape
 from tornado.httpclient import AsyncHTTPClient
 from tornado.platform.asyncio import AsyncIOMainLoop
 import asyncio
-from functools import reduce
 from zeroconf import Zeroconf
+from serializer import Serializer
 
 
+# noinspection PyAbstractClass
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self):
         super().initialize()
+        self.serializer = Serializer()
 
-    def get_template_namespace(self):
-        namespace = super().get_template_namespace()
-        namespace['connected'] = server._protocol is not None
-        namespace['is_admin'] = self.get_argument('is_admin', False)
-        namespace['debug'] = self.get_argument('debug', False)
-        return namespace
+    def set_default_headers(self, *args, **kwargs):
+        self.add_header('Access-Control-Allow-Origin', '*')
+        self.add_header('Content-Type', 'application/json')
 
-    async def mopidy_rpc_request(self, server_name, method, params={}):
+    async def mopidy_rpc_request(self, server_name, method, params=None):
         body = json.dumps({
             "method": method,
             "jsonrpc": "2.0",
-            "params": params,
+            "params": params if params is not None else {},
             "id": 1
         })
 
@@ -48,10 +46,15 @@ class BaseHandler(tornado.web.RequestHandler):
 
         return json.loads(to_unicode(response.body))['result']
 
-    def get_mopidy_server_from_name(self, name):
+    @staticmethod
+    def get_mopidy_server_from_name(name):
         return list(filter(lambda mopidy_server: mopidy_server.name == name, mopidy_servers))[0]
 
+    def write_json(self, data):
+        self.write(json.dumps(self.serializer.serialize(data)))
 
+
+# noinspection PyAbstractClass
 class BrowseHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
@@ -60,11 +63,10 @@ class BrowseHandler(BaseHandler):
 
         items = yield self.mopidy_rpc_request(name, "core.library.browse", {'uri': uri})
 
-        self.add_header('Content-Type', 'application/json')
-        self.add_header('Access-Control-Allow-Origin', '*')
-        self.write(json.dumps(items))
+        self.write_json(items)
 
 
+# noinspection PyAbstractClass
 class PlayHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
@@ -74,39 +76,35 @@ class PlayHandler(BaseHandler):
         tracks = yield self.mopidy_rpc_request(name, "core.tracklist.add", {'uris': uris})
         yield self.mopidy_rpc_request(name, "core.playback.play", {'tlid': tracks[0]['tlid']})
 
-        self.add_header('Content-Type', 'application/json')
-        self.add_header('Access-Control-Allow-Origin', '*')
-        self.write('')
+        self.write_json({})
 
 
+# noinspection PyAbstractClass
 class StreamsHandler(BaseHandler):
     def get(self):
-        self.add_header('Content-Type', 'application/json')
-        self.add_header('Access-Control-Allow-Origin', '*')
-        self.write(json.dumps(list(map(lambda s: {'id': s.identifier, 'status': s.status}, server.streams))))
+        self.write_json(server.streams)
 
 
+# noinspection PyAbstractClass
 class ClientsHandler(BaseHandler):
     def get(self):
         clients = sorted(server.clients, key=lambda client: (client.connected, client.identifier))
-
-        self.add_header('Content-Type', 'application/json')
-        self.add_header('Access-Control-Allow-Origin', '*')
-        self.write(json.dumps(list(map(lambda c: {'id': c.identifier, 'muted': c.muted, 'volume': c.volume, 'name': c.friendly_name, 'latency': c.latency, 'connected': c.connected, 'stream': c.group.stream if c.group else ''}, clients))))
+        self.write_json(clients)
 
 
+# noinspection PyAbstractClass
 class MopidyServersHandler(BaseHandler):
     def get(self):
-        self.add_header('Content-Type', 'application/json')
-        self.add_header('Access-Control-Allow-Origin', '*')
-        self.write(json.dumps(list(map(lambda s: {'name': s.name}, mopidy_servers))))
+        self.write_json(mopidy_servers)
 
 
+# noinspection PyAbstractClass
 class MainHandler(BaseHandler):
     def get(self):
         self.redirect('/index.html')
 
 
+# noinspection PyAbstractClass
 class ClientSettingsHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
@@ -130,9 +128,7 @@ class ClientSettingsHandler(BaseHandler):
             logging.error('Unknown action!')
             pass
 
-        self.add_header('Content-Type', 'application/json')
-        self.add_header('Access-Control-Allow-Origin', '*')
-        self.write('')
+        self.write_json({})
 
 
 def make_app(debug):
@@ -155,13 +151,19 @@ if __name__ == "__main__":
     parser.add_argument("--port", help="web server port", default=8080, type=int)
     args = parser.parse_args()
 
-    logging.basicConfig(level=getattr(logging, args.loglevel.upper()))
+    logging_file_handler = logging.FileHandler("server.log", encoding='utf-8')
+    logging_stdout_handler = logging.StreamHandler(sys.stdout)
+    logging.basicConfig(
+        level=getattr(logging, args.loglevel.upper()),
+        handlers=[logging_file_handler, logging_stdout_handler],
+        datefmt='%Y-%m-%d %H:%M:%S',
+        format='[%(asctime)s] [%(name)s] %(levelname)s: %(message)s'
+    )
 
     snap_servers = []
     mopidy_servers = []
 
     class MopidyListener:
-
         def add_service(self, zeroconf, type, name):
             info = zeroconf.get_service_info(type, name)
             logging.debug("Service %s added, service info: %s" % (name, info))
@@ -221,7 +223,6 @@ if __name__ == "__main__":
             yield from asyncio.sleep(60)
 
     ioloop.create_task(sync_snapserver())
-
 
     http_client = AsyncHTTPClient()
 
