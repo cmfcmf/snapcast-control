@@ -10,7 +10,7 @@ import {MopidyServer} from './mopidy-server';
 
 @Injectable()
 export class ApiService {
-  baseUrl = '';
+  baseUrl = location.port === '4200' ? 'http://localhost:8080' : '';
 
   constructor(
     private http: HttpClient,

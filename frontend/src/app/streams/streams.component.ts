@@ -20,7 +20,7 @@ export class StreamsComponent implements OnInit, OnDestroy {
   mopidyServers: MopidyServer[] = [];
   isAdmin: boolean;
 
-  private refreshInterval = 1000;
+  private refreshInterval = 2000;
   private alive: boolean;
 
   constructor(
