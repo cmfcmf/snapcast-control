@@ -32,6 +32,7 @@ export class BrowserComponent implements OnInit {
 
   public stop() {
     this.api.stop(this.mopidyServerName);
+    this.router.navigateByUrl('/');
   }
 
   public playUris(uris: string[]) {

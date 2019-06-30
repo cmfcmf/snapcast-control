@@ -82,6 +82,8 @@ class PlayHandler(BaseHandler):
 class MopidyStopPlaybackHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
+        name = self.get_argument('name')
+        yield self.mopidy_rpc_request(name, "core.tracklist.clear")
         yield self.mopidy_rpc_request(name, "core.playback.stop")
         self.write_json({})
 
