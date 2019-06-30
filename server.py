@@ -79,6 +79,13 @@ class PlayHandler(BaseHandler):
         self.write_json({})
 
 
+class MopidyStopPlaybackHandler(BaseHandler):
+    @tornado.gen.coroutine
+    def get(self):
+        yield self.mopidy_rpc_request(name, "core.playback.stop")
+        self.write_json({})
+
+
 # noinspection PyAbstractClass
 class StreamsHandler(BaseHandler):
     def get(self):
@@ -139,6 +146,7 @@ def make_app(debug):
         (r"/client", ClientSettingsHandler),
         (r"/browse.json", BrowseHandler),
         (r"/play", PlayHandler),
+        (r"/stop", MopidyStopPlaybackHandler),
         (r"/", MainHandler),
         (r"/(.*)", tornado.web.StaticFileHandler, {'path': (os.path.join(os.path.dirname(__file__), 'frontend', 'dist'))}),
     ], debug=debug)

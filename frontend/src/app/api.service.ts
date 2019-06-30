@@ -83,6 +83,14 @@ export class ApiService {
       .subscribe();
   }
 
+  public stop(mopidyServerName: string): void {
+    this.http.get(this.baseUrl + '/stop', {params: {name: mopidyServerName}})
+      .pipe(
+        catchError(this.handleError('stop', []))
+      )
+      .subscribe();
+  }
+
   private setClientConfig(client: Client, action: string, params = {}) {
     params['id'] = client.id;
     params['action'] = action;
