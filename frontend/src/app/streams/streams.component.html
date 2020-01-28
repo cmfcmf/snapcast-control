@@ -24,6 +24,9 @@
           </ng-container>
         </div>
       </div>
+      <div class="list-group-item list-group-item-danger" *ngIf="client.connected && client.muted">
+        Ton ist ausgeschaltet!
+      </div>
       <div class="card-body" *ngIf="client.connected || isAdmin">
         <a href="javascript:void(0)" *ngIf="client.connected && client.muted" (click)="api.unmute(client)"
            class="card-link">Ton einschalten</a>

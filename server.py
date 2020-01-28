@@ -5,6 +5,7 @@ import sys
 import time
 import logging
 import os
+import typing
 
 import tornado.ioloop
 import tornado.gen
@@ -18,7 +19,6 @@ from zeroconf import Zeroconf
 from serializer import Serializer
 
 
-# noinspection PyAbstractClass
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self):
         super().initialize()
@@ -54,7 +54,6 @@ class BaseHandler(tornado.web.RequestHandler):
         self.write(json.dumps(self.serializer.serialize(data)))
 
 
-# noinspection PyAbstractClass
 class BrowseHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
@@ -66,7 +65,6 @@ class BrowseHandler(BaseHandler):
         self.write_json(items)
 
 
-# noinspection PyAbstractClass
 class PlayHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
@@ -88,32 +86,22 @@ class MopidyStopPlaybackHandler(BaseHandler):
         self.write_json({})
 
 
-# noinspection PyAbstractClass
 class StreamsHandler(BaseHandler):
     def get(self):
         self.write_json(server.streams)
 
 
-# noinspection PyAbstractClass
 class ClientsHandler(BaseHandler):
     def get(self):
         clients = sorted(server.clients, key=lambda client: (client.connected, client.identifier))
         self.write_json(clients)
 
 
-# noinspection PyAbstractClass
 class MopidyServersHandler(BaseHandler):
     def get(self):
         self.write_json(mopidy_servers)
 
 
-# noinspection PyAbstractClass
-class MainHandler(BaseHandler):
-    def get(self):
-        self.redirect('/index.html')
-
-
-# noinspection PyAbstractClass
 class ClientSettingsHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
@@ -140,6 +128,18 @@ class ClientSettingsHandler(BaseHandler):
         self.write_json({})
 
 
+class StaticFileHandler(tornado.web.StaticFileHandler):
+    def validate_absolute_path(self, root: str, absolute_path: str) -> typing.Optional[str]:
+        try:
+            return super().validate_absolute_path(root, absolute_path)
+        except tornado.web.HTTPError as e:
+            if self.request.method == "GET" and e.status_code == 404:
+                self.redirect("/")
+                return None
+            else:
+                raise e
+
+
 def make_app(debug):
     return tornado.web.Application([
         (r"/streams.json", StreamsHandler),
@@ -149,8 +149,10 @@ def make_app(debug):
         (r"/browse.json", BrowseHandler),
         (r"/play", PlayHandler),
         (r"/stop", MopidyStopPlaybackHandler),
-        (r"/", MainHandler),
-        (r"/(.*)", tornado.web.StaticFileHandler, {'path': (os.path.join(os.path.dirname(__file__), 'frontend', 'dist'))}),
+        (r"/(.*)", StaticFileHandler, {
+            'path': os.path.join(os.path.dirname(__file__), 'frontend', 'dist'),
+            'default_filename': 'index.html'
+        }),
     ], debug=debug)
 
 
@@ -200,10 +202,7 @@ if __name__ == "__main__":
 
     zeroconf = Zeroconf()
     zeroconf.add_service_listener('_mopidy-http._tcp.local.', MopidyListener())
-    # TODO: This should use _snapcast-jsonrpc._tcp.local.
-    #       However, this name does not comply with https://tools.ietf.org/html/rfc6763#section-7.2
-    #       and is therefore rejected by the zeroconf library.
-    zeroconf.add_service_listener('_snapcast._tcp.local.', SnapListener())
+    zeroconf.add_service_listener('_snapcast-tcp._tcp.local.', SnapListener())
 
     logging.info("Discovering services")
     while len(snap_servers) == 0:
@@ -218,9 +217,7 @@ if __name__ == "__main__":
     ioloop = asyncio.get_event_loop()
 
     logging.info("Connecting to snapserver")
-    # TODO: This should also specify port=snap_server.port
-    #       However, we first need to fix the bug above.
-    server = Snapserver(ioloop, host=snap_server.server, reconnect=True)
+    server = Snapserver(ioloop, host=snap_server.server, port=snap_server.port, reconnect=True)
     ioloop.run_until_complete(server.start())
 
 
