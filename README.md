@@ -16,6 +16,8 @@ yarn run ng build
 
 ## Development
 
+Go to http://localhost:4200
+
 ### Server
 
 ```
@@ -27,5 +29,5 @@ python server.py --debug --port 8080
 
 ```
 cd frontend
-yarn run ng build
+yarn run ng serve
 ```

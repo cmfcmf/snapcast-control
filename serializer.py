@@ -37,8 +37,9 @@ class Serializer(object):
         }
 
     @staticmethod
-    def _serialize_snapstream(snap_stream):
+    def _serialize_snapstream(snap_stream: Snapstream):
         return {
             'id': snap_stream.identifier,
-            'status': snap_stream.status
+            'status': snap_stream.status,
+            'meta': snap_stream._stream['meta']
         }

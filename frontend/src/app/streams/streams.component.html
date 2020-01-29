@@ -17,9 +17,15 @@
                (click)="api.setStream(client, stream)"
                class="list-group-item list-group-item-action"
                [ngClass]="{'active': client.stream == stream.id, 'list-group-item-info': stream.id.startsWith(client.id)}">
-              <i class="icon-stream-idle"
-                 [ngClass]="{'icon-stream-idle': stream.status == 'idle', 'icon-stream-playing': stream.status == 'playing'}"></i>
-              {{ stream.id }}
+              <h5>
+                <i class="icon-stream-idle"
+                [ngClass]="{'icon-stream-idle': stream.status == 'idle', 'icon-stream-playing': stream.status == 'playing'}"></i>
+                {{ stream.id }}
+              </h5>
+              <div class="d-flex w-100">
+                <img [src]="'data:image/png;base64,' + stream.meta.COVER" class="cover pr-2" *ngIf="stream.meta.COVER && stream.meta.COVER.length">
+                <em>{{ stream.meta.TITLE }} {{ stream.meta.ARTIST ? ' - ' + stream.meta.ARTIST : '' }}</em>
+              </div>
             </a>
           </ng-container>
         </div>
