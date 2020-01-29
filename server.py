@@ -209,15 +209,22 @@ if __name__ == "__main__":
         time.sleep(0.1)
 
     if len(snap_servers) != 1:
-        logging.error("Exactly 1 snapserver expected, found {}.".format(len(snap_servers)))
+        logging.error("Exactly 1 snapserver expected, found {}. IPs:".format(len(snap_servers)))
+
+        for server in snap_servers:
+            addresses = [server.server]
+            addresses.extend(server.parsed_addresses())
+            logging.error(", ".join(addresses))
         sys.exit(1)
+
     snap_server = snap_servers[0]
 
     AsyncIOMainLoop().install()
     ioloop = asyncio.get_event_loop()
 
     logging.info("Connecting to snapserver")
-    server = Snapserver(ioloop, host=snap_server.server, port=snap_server.port, reconnect=True)
+    server = Snapserver(ioloop, host=snap_server.parsed_addresses()[0],
+                        port=snap_server.port, reconnect=True)
     ioloop.run_until_complete(server.start())
 
 
