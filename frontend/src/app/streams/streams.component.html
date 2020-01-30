@@ -19,7 +19,8 @@
                [ngClass]="{'active': client.stream == stream.id, 'list-group-item-info': stream.id.startsWith(client.id)}">
               <i class="icon-stream-idle"
               [ngClass]="{'icon-stream-idle': stream.status == 'idle', 'icon-stream-playing': stream.status == 'playing'}"></i>
-              {{ stream.id }}
+              <strong *ngIf="stream.status == 'playing'">{{ stream.id }}</strong>
+              <ng-container *ngIf="stream.status != 'playing'">{{ stream.id }}</ng-container>
               <br />
               <div class="clearfix mt-1" *ngIf="stream.status == 'playing'">
                 <img [src]="'data:image/png;base64,' + stream.meta.COVER" class="cover ml-2 float-right" *ngIf="stream.meta.COVER && stream.meta.COVER.length">
