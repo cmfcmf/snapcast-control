@@ -5,9 +5,32 @@
   "tasks": [
     {
       "label": "run",
+      "dependsOn": [
+        "server:run",
+        "client:run"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "server:run",
       "type": "shell",
       "command": "${config:python.pythonPath} server.py --port 8080 --debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "group": "run"
+      }
+    },
+    {
+      "label": "client:run",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "command": "yarn ng serve",
+      "problemMatcher": [],
+      "presentation": {
+        "group": "run"
+      }
     }
   ]
 }

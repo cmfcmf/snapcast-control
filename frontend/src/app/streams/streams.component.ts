@@ -39,9 +39,6 @@ export class StreamsComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.api.getClients().subscribe((clients: Client[]) => {
           this.clients = clients.sort((a: Client, b: Client) => {
-            if (a.connected && b.connected) {
-              return 0;
-            }
             if (a.connected && !b.connected) {
               return -1;
             }

@@ -1,3 +1,4 @@
 tornado
-snapcast
+git+https://github.com/cmfcmf/python-snapcast.git@metadata
+#-e ../python-snapcast
 zeroconf
