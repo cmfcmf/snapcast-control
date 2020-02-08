@@ -169,18 +169,21 @@ const Streams = () => {
 
   return <>{state === "loading"
     ? <StreamSkeleton />
-    : servers.map(([name, server]) =>
-      <div className="row" key={name}>
-        {servers.length > 1 && <div className="col-12"><h2>{name}</h2></div>}
-        {
-          server.clients.map(client =>
-            <div className="col-12 col-sm-6 col-lg-4 col-xl-3" key={client.id}>
-              <ClientColumn serverName={name} client={client} streams={server.streams} mopidyServers={mopidyServers} />
-            </div>
-          )
-        }
-      </div>
-    )}</>
+    : <>
+        {servers.map(([name, server]) =>
+          <div className="row" key={name}>
+            {servers.length > 1 && <div className="col-12"><h2>{name}</h2></div>}
+            {
+              server.clients.map(client =>
+                <div className="col-12 col-sm-6 col-lg-4 col-xl-3" key={client.id}>
+                  <ClientColumn serverName={name} client={client} streams={server.streams} mopidyServers={mopidyServers} />
+                </div>
+              )
+            }
+          </div>
+        )}
+        {servers.length === 0 && <div className="alert alert-warning">Keine SnapCast Instanzen auffindbar. Suche weiter...</div>}
+    </>}</>
 }
 
 export default Streams;

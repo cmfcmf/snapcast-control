@@ -201,7 +201,7 @@ if __name__ == "__main__":
 
     zero_snap_servers = []
     zero_mopidy_servers = []
-    snap_servers: Dict[str, Snapserver] = {}
+    snap_servers = {}
 
     def on_add_snapserver(info: ServiceInfo):
         snap_server = Snapserver(ioloop, host=info.parsed_addresses()[0],

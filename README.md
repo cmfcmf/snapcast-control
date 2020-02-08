@@ -1,8 +1,11 @@
 # Snapcast Control Web Interface
 
+![Overview](docs/overview.png)
+
 A web interface for [Snapcast](https://github.com/badaix/snapcast).
 It allows you select which stream is played on which client.
 It also has support to select local radio and files from Mopidy instances.
+Currently, the UI is in German. If you are interested in using an English version, please open an issue.
 
 ## Installation
 
@@ -38,6 +41,6 @@ python server.py --debug --port 8080
 Client:
 
 ```
-cd frontend
-yarn start
+cd frontend-react
+yarn install && yarn start
 ```
