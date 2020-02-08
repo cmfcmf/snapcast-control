@@ -1,4 +1,4 @@
-import { Stream, Client, MopidyServer, BibItem } from "./entities";
+import { Stream, Client, MopidyServer, BibItem, SnapServer } from "./entities";
 
 export class Api {
   private static async makeRequest<T>(path: string, params: Record<string, string|string[]> = {}): Promise<T> {
@@ -13,40 +13,36 @@ export class Api {
 
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 5000);
-    const result = await fetch(url.href, { signal: controller.signal });
+    const result = await fetch(url.href, { signal: controller.signal, redirect: "error" });
     return await result.json();
   }
 
-  public static async getStreams(){
-    return this.makeRequest<Stream[]>('/streams.json');
-  }
-
-  public static async getClients() {
-    return this.makeRequest<Client[]>('/clients.json');
+  public static async getSnapServers(){
+    return this.makeRequest<Record<string, SnapServer>>('/snap_servers.json');
   }
 
   public static async getMopidyServers() {
     return this.makeRequest<MopidyServer[]>('/mopidy_servers.json');
   }
 
-  public static async mute(client: Client) {
-    await this.setClientConfig(client, 'mute');
+  public static async mute(serverName: string, client: Client) {
+    await this.setClientConfig(serverName, client, 'mute');
   }
 
-  public static async unmute(client: Client) {
-    await this.setClientConfig(client, 'unmute');
+  public static async unmute(serverName: string, client: Client) {
+    await this.setClientConfig(serverName, client, 'unmute');
   }
 
-  public static async delete(client: Client) {
-    await this.setClientConfig(client, 'delete');
+  public static async delete(serverName: string, client: Client) {
+    await this.setClientConfig(serverName, client, 'delete');
   }
 
-  public static async setLatency(client: Client, latency: number) {
-    await this.setClientConfig(client, 'set_latency', {latency: latency});
+  public static async setLatency(serverName: string, client: Client, latency: number) {
+    await this.setClientConfig(serverName, client, 'set_latency', {latency: latency});
   }
 
-  public static async setStream(client: Client, stream: Stream) {
-    await this.setClientConfig(client, 'set_stream', {stream: stream.id});
+  public static async setStream(serverName: string, client: Client, stream: Stream) {
+    await this.setClientConfig(serverName, client, 'set_stream', {stream: stream.id});
   }
 
   public static browse(uri: string|null, mopidyServerName: string): Promise<BibItem[]> {
@@ -70,7 +66,7 @@ export class Api {
     return this.makeRequest('/stop', { name: mopidyServerName });
   }
 
-  private static async setClientConfig(client: Client, action: string, params = {}) {
-    return this.makeRequest('/client', { id: client.id, action, ...params });
+  private static async setClientConfig(serverName: string, client: Client, action: string, params = {}) {
+    return this.makeRequest('/client', { id: client.id, action, server_name: serverName, ...params });
   }
 }

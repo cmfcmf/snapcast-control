@@ -9,7 +9,7 @@ export interface Client {
 
 export interface Stream {
   id: string,
-  status: string,
+  status: "playing" | "idle",
   meta: {
     TITLE?: string,
     ARTIST?: string,
@@ -26,4 +26,9 @@ export interface BibItem {
   name: string,
   uri: string,
   type: string,
+}
+
+export interface SnapServer {
+  clients: Client[],
+  streams: Stream[]
 }

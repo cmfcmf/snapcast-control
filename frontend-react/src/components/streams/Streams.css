@@ -5,3 +5,8 @@
   width: auto;
   height: auto;
 }
+
+.list-group-flush .list-group-item:first-child {
+  /* Re-add top border */
+  border-top-width: 1px;
+}

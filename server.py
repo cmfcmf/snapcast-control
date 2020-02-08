@@ -5,7 +5,7 @@ import sys
 import time
 import logging
 import os
-import typing
+from typing import Optional, List, Dict
 
 import tornado.ioloop
 import tornado.gen
@@ -15,8 +15,37 @@ from tornado.escape import to_unicode
 from tornado.httpclient import AsyncHTTPClient
 from tornado.platform.asyncio import AsyncIOMainLoop
 import asyncio
-from zeroconf import Zeroconf
+from zeroconf import Zeroconf, ServiceListener, ServiceInfo
 from serializer import Serializer
+
+SNAPCAST_ZERO_NAME = '_snapcast-tcp._tcp.local.'
+
+def noop(*args, **kws):
+    return None
+
+class ZeroListener(ServiceListener):
+    def __init__(self, container: list, on_add_service = noop, on_remove_service = noop):
+        self.container = container
+        self.on_add_service = on_add_service
+        self.on_remove_service = on_remove_service
+
+    def add_service(self, zeroconf, type, name):
+        info = zeroconf.get_service_info(type, name)
+        logging.debug("Service %s added, service info: %s" % (name, info))
+        self.container.append(info)
+        self.on_add_service(info)
+
+    def update_service(self, zeroconf, type, name):
+        info = zeroconf.get_service_info(type, name)
+        logging.debug("Service %s updated, service info: %s" % (name, info))
+
+    def remove_service(self, zeroconf, type, name):
+        logging.warning("Service %s removed" % name)
+        for i, info in enumerate(self.container):
+            if info.name == name:
+                self.container.pop(i)
+                self.on_remove_service(info)
+                break
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -25,8 +54,8 @@ class BaseHandler(tornado.web.RequestHandler):
         self.serializer = Serializer()
 
     def set_default_headers(self, *args, **kwargs):
-        self.add_header('Access-Control-Allow-Origin', '*')
-        self.add_header('Content-Type', 'application/json')
+        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Content-Type', 'application/json')
 
     async def mopidy_rpc_request(self, server_name, method, params=None):
         body = json.dumps({
@@ -48,7 +77,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     @staticmethod
     def get_mopidy_server_from_name(name):
-        return list(filter(lambda mopidy_server: mopidy_server.name == name, mopidy_servers))[0]
+        return list(filter(lambda mopidy_server: mopidy_server.name == name, zero_mopidy_servers))[0]
 
     def write_json(self, data):
         self.write(json.dumps(self.serializer.serialize(data)))
@@ -86,28 +115,24 @@ class MopidyStopPlaybackHandler(BaseHandler):
         self.write_json({})
 
 
-class StreamsHandler(BaseHandler):
+class SnapServersHandler(BaseHandler):
     def get(self):
-        self.write_json(server.streams)
-
-
-class ClientsHandler(BaseHandler):
-    def get(self):
-        clients = sorted(server.clients, key=lambda client: (client.connected, client.identifier))
-        self.write_json(clients)
+        self.write_json({name: { 'streams': server.streams, 'clients': server.clients } for name, server in snap_servers.items()})
 
 
 class MopidyServersHandler(BaseHandler):
     def get(self):
-        self.write_json(mopidy_servers)
+        self.write_json(zero_mopidy_servers)
 
 
 class ClientSettingsHandler(BaseHandler):
     @tornado.gen.coroutine
     def get(self):
+        server_name = self.get_argument('server_name')
         client_id = self.get_argument('id')
         action = self.get_argument('action')
 
+        server = snap_servers[server_name]
         client = server.client(client_id)
         if action == 'mute':
             yield from client.set_muted(True)
@@ -129,7 +154,7 @@ class ClientSettingsHandler(BaseHandler):
 
 
 class StaticFileHandler(tornado.web.StaticFileHandler):
-    def validate_absolute_path(self, root: str, absolute_path: str) -> typing.Optional[str]:
+    def validate_absolute_path(self, root: str, absolute_path: str) -> Optional[str]:
         try:
             return super().validate_absolute_path(root, absolute_path)
         except tornado.web.HTTPError as e:
@@ -142,8 +167,7 @@ class StaticFileHandler(tornado.web.StaticFileHandler):
 
 def make_app(debug):
     return tornado.web.Application([
-        (r"/streams.json", StreamsHandler),
-        (r"/clients.json", ClientsHandler),
+        (r"/snap_servers.json", SnapServersHandler),
         (r"/mopidy_servers.json", MopidyServersHandler),
         (r"/client", ClientSettingsHandler),
         (r"/browse.json", BrowseHandler),
@@ -172,68 +196,35 @@ if __name__ == "__main__":
         format='[%(asctime)s] [%(name)s] %(levelname)s: %(message)s'
     )
 
-    snap_servers = []
-    mopidy_servers = []
-
-    class MopidyListener:
-        def add_service(self, zeroconf, type, name):
-            info = zeroconf.get_service_info(type, name)
-            logging.debug("Service %s added, service info: %s" % (name, info))
-            global mopidy_servers
-            mopidy_servers.append(info)
-
-        def remove_service(self, zeroconf, type, name):
-            logging.warning("Service %s removed" % name)
-            global mopidy_servers
-            mopidy_servers = list(filter(lambda mopidy_server: mopidy_server.name != name, mopidy_servers))
-
-
-    class SnapListener:
-        def add_service(self, zeroconf, type, name):
-            info = zeroconf.get_service_info(type, name)
-            logging.debug("Service %s added, service info: %s" % (name, info))
-            global snap_servers
-            snap_servers.append(info)
-
-        def remove_service(self, zeroconf, type, name):
-            logging.warning("Service %s removed" % name)
-            global snap_servers
-            snap_servers = list(filter(lambda snap_server: snap_server.name != name, snap_servers))
-
-    zeroconf = Zeroconf()
-    zeroconf.add_service_listener('_mopidy-http._tcp.local.', MopidyListener())
-    zeroconf.add_service_listener('_snapcast-tcp._tcp.local.', SnapListener())
-
-    logging.info("Discovering services")
-    while len(snap_servers) == 0:
-        time.sleep(0.1)
-
-    if len(snap_servers) != 1:
-        logging.error("Exactly 1 snapserver expected, found {}. IPs:".format(len(snap_servers)))
-
-        for server in snap_servers:
-            addresses = [server.server]
-            addresses.extend(server.parsed_addresses())
-            logging.error(", ".join(addresses))
-        sys.exit(1)
-
-    snap_server = snap_servers[0]
-
     AsyncIOMainLoop().install()
     ioloop = asyncio.get_event_loop()
 
-    logging.info("Connecting to snapserver")
-    server = Snapserver(ioloop, host=snap_server.parsed_addresses()[0],
-                        port=snap_server.port, reconnect=True)
-    ioloop.run_until_complete(server.start())
+    zero_snap_servers = []
+    zero_mopidy_servers = []
+    snap_servers: Dict[str, Snapserver] = {}
 
+    def on_add_snapserver(info: ServiceInfo):
+        snap_server = Snapserver(ioloop, host=info.parsed_addresses()[0],
+                                 port=info.port, reconnect=True)
+        snap_servers[info.name.replace('.' + SNAPCAST_ZERO_NAME, '')] = snap_server
+        ioloop.create_task(snap_server.start())
+
+    def on_remove_snapserver(info: ServiceInfo):
+        snap_servers.pop(info.name.replace('.' + SNAPCAST_ZERO_NAME, ''))
+
+    zeroconf = Zeroconf()
+    zeroconf.add_service_listener('_mopidy-http._tcp.local.', ZeroListener(zero_mopidy_servers))
+    zeroconf.add_service_listener(SNAPCAST_ZERO_NAME, ZeroListener(zero_snap_servers,
+                                                                   on_add_snapserver,
+                                                                   on_remove_snapserver))
 
     @asyncio.coroutine
     def sync_snapserver():
         while True:
             logging.info('Synchronizing snapserver')
-            status = yield from server.status()
-            server.synchronize(status)
+            for server in snap_servers.values():
+                status = yield from server.status()
+                server.synchronize(status)
             yield from asyncio.sleep(60)
 
     ioloop.create_task(sync_snapserver())

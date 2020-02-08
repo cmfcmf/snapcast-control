@@ -7,8 +7,10 @@ from zeroconf import ServiceInfo
 
 class Serializer(object):
     def serialize(self, data):
-        if isinstance(data, collections.Sequence):
+        if isinstance(data, list):
             return list(map(self.serialize, data))
+        if isinstance(data, dict):
+            return {key: self.serialize(value) for key, value in data.items()}
         if isinstance(data, Snapclient):
             return self._serialize_snapclient(data)
         if isinstance(data, Snapstream):
