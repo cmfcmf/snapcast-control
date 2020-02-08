@@ -150,7 +150,7 @@ def make_app(debug):
         (r"/play", PlayHandler),
         (r"/stop", MopidyStopPlaybackHandler),
         (r"/(.*)", StaticFileHandler, {
-            'path': os.path.join(os.path.dirname(__file__), 'frontend', 'dist'),
+            'path': os.path.join(os.path.dirname(__file__), 'frontend-react', 'build'),
             'default_filename': 'index.html'
         }),
     ], debug=debug)

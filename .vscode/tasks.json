@@ -24,9 +24,9 @@
       "label": "client:run",
       "type": "shell",
       "options": {
-        "cwd": "${workspaceFolder}/frontend"
+        "cwd": "${workspaceFolder}/frontend-react"
       },
-      "command": "yarn ng serve",
+      "command": "yarn start",
       "problemMatcher": [],
       "presentation": {
         "group": "run"
