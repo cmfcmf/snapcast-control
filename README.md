@@ -1,33 +1,43 @@
 # Snapcast Control Web Interface
 
+A web interface for [Snapcast](https://github.com/badaix/snapcast).
+It allows you select which stream is played on which client.
+It also has support to select local radio and files from Mopidy instances.
 
 ## Installation
 
 ```bash
-apt install python3 python3-venv
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+sudo apt install python3 python3-pip
+sudo pip3 install -r requirements.txt
 
-cd frontend
-yarn install
-yarn run ng build
+cd frontend-react
+yarn install && yarn build
+```
+
+Add an entry to crontab to start snapcast-control after booting:
+
+```bash
+sudo crontab -e # sudo is only needed for ports < 1000
+```
+
+```crontab
+@reboot sleep 10 && /absolute/path/to/snapcast-control/server.py --port 80
 ```
 
 ## Development
 
-Go to http://localhost:4200
-
-### Server
+Server:
 
 ```
+sudo apt install python3 python3-venv
+python3 -m venv .venv
 source .venv/bin/activate
 python server.py --debug --port 8080
 ```
 
-### Client
+Client:
 
 ```
 cd frontend
-yarn run ng serve
+yarn start
 ```
