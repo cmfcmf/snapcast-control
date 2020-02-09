@@ -4,7 +4,7 @@ import { Client, Stream, MopidyServer, SnapServer } from "../../entities";
 import { Link } from "react-router-dom";
 import clsx from "clsx";
 import { useIsAdmin, times } from "../../util";
-import { interval } from "rxjs";
+import { timer } from "rxjs";
 import { exhaustMap, filter } from "rxjs/operators";
 import { Api } from "../../api";
 import ContentLoader from 'react-content-loader'
@@ -111,7 +111,7 @@ const StreamSkeleton = () => {
           preserveAspectRatio="none"
         >
           {times(rows, i =>
-            <rect key={i} x={0} y={(i > 0 ? i + 1 : 0) * (rowHeight + rowPadding)} rx="5" ry="5" width="100%" height={i === 0 ? rowHeight * 2 : rowHeight} />
+            <rect key={i} x={0} y={(i > 0 ? i + 1 : 0) * (rowHeight + rowPadding)} rx="5" ry="5" width="100" height={i === 0 ? rowHeight * 2 : rowHeight} />
           )}
         </ContentLoader>
       </div>)}
@@ -124,7 +124,7 @@ const Streams = () => {
   const [state, setLoadingState] = useState<"loading" | "done">("loading");
 
   useEffect(() => {
-    const subscription = interval(2000)
+    const subscription = timer(0, 2000)
       .pipe(
         // Do not constantly update if the window is hidden
         filter(() => !document.hidden),
