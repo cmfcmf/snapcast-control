@@ -31,16 +31,16 @@ class ZeroListener(ServiceListener):
 
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
-        logging.debug("Service %s added, service info: %s" % (name, info))
+        logging.info("Service %s added, service info: %s" % (name, info))
         self.container.append(info)
         self.on_add_service(info)
 
     def update_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
-        logging.debug("Service %s updated, service info: %s" % (name, info))
+        logging.info("Service %s updated, service info: %s" % (name, info))
 
     def remove_service(self, zeroconf, type, name):
-        logging.warning("Service %s removed" % name)
+        logging.info("Service %s removed" % name)
         for i, info in enumerate(self.container):
             if info.name == name:
                 self.container.pop(i)
@@ -188,6 +188,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging_file_handler = logging.FileHandler("server.log", encoding='utf-8')
+    logging_file_handler.setLevel(logging.INFO)
+    logging_file_handler.addFilter(lambda r: not (r.name == "tornado.access"))
     logging_stdout_handler = logging.StreamHandler(sys.stdout)
     logging.basicConfig(
         level=getattr(logging, args.loglevel.upper()),
