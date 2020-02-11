@@ -71,7 +71,7 @@ class BaseHandler(tornado.web.RequestHandler):
         mopidy_server = self.get_mopidy_server_from_name(server_name)
         url = 'http://{}:{}/mopidy/rpc'.format(mopidy_server.server, mopidy_server.port)
 
-        response = await http_client.fetch(url, method='POST', body=body, headers=headers)
+        response = await AsyncHTTPClient().fetch(url, method='POST', body=body, headers=headers)
 
         return json.loads(to_unicode(response.body))['result']
 
@@ -205,14 +205,17 @@ if __name__ == "__main__":
     zero_mopidy_servers = []
     snap_servers = {}
 
+    def info_to_name(info: ServiceInfo):
+        return info.name.replace('.' + SNAPCAST_ZERO_NAME, '')
+
     def on_add_snapserver(info: ServiceInfo):
         snap_server = Snapserver(ioloop, host=info.parsed_addresses()[0],
                                  port=info.port, reconnect=True)
-        snap_servers[info.name.replace('.' + SNAPCAST_ZERO_NAME, '')] = snap_server
+        snap_servers[info_to_name(info)] = snap_server
         ioloop.create_task(snap_server.start())
 
     def on_remove_snapserver(info: ServiceInfo):
-        snap_servers.pop(info.name.replace('.' + SNAPCAST_ZERO_NAME, ''))
+        snap_servers.pop(info_to_name(info))
 
     zeroconf = Zeroconf()
     zeroconf.add_service_listener('_mopidy-http._tcp.local.', ZeroListener(zero_mopidy_servers))
@@ -223,15 +226,14 @@ if __name__ == "__main__":
     @asyncio.coroutine
     def sync_snapserver():
         while True:
-            logging.info('Synchronizing snapserver')
-            for server in snap_servers.values():
+            servers = [server for server in snap_servers.values() if server._protocol is not None]
+            logging.info('Synchronizing %s snapservers' % len(servers))
+            for server in servers:
                 status = yield from server.status()
                 server.synchronize(status)
             yield from asyncio.sleep(60)
 
     ioloop.create_task(sync_snapserver())
-
-    http_client = AsyncHTTPClient()
 
     logging.info("Starting web app")
     app = make_app(args.debug)
