@@ -44,3 +44,10 @@ Client:
 cd frontend-react
 yarn install && yarn start
 ```
+
+## SnapCast Update
+
+```
+cd ansible
+ansible-playbook playbook.yml
+```

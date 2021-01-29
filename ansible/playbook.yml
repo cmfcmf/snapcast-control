@@ -1,0 +1,56 @@
+---
+- name: Update
+  hosts: all
+  remote_user: pi
+  vars:
+      VERSION: "0.23.103-1"
+  tasks:
+  - name: "Make {{ item }} writeable"
+    become: yes
+    command: "mount -o remount,rw {{ item }}"
+    when: readonly == 1
+    loop: [/boot, /]
+  - name: apt update
+    become: yes
+    apt:
+      update_cache: yes
+  - name: apt upgrade
+    become: yes
+    apt:
+      upgrade: safe
+  - name: Remove old snapcast versions
+    ansible.builtin.file:
+      path: /home/pi/snap*.deb
+      state: absent
+
+  - name: Upload latest snapserver
+    ansible.builtin.copy:
+      src: snapserver_{{ VERSION }}_armhf.deb
+      dest: /home/pi
+    when: server == 1
+  - name: Upload latest snapclient
+    ansible.builtin.copy:
+      src: snapclient_{{ VERSION }}_armhf.deb
+      dest: /home/pi
+    when: client == 1
+
+  - name: Install latest snapserver
+    become: yes
+    apt:
+      deb: /home/pi/snapserver_{{ VERSION }}_armhf.deb
+    when: server == 1
+  - name: Install latest snapclient
+    become: yes
+    apt:
+      deb: /home/pi/snapclient_{{ VERSION }}_armhf.deb
+    when: client == 1
+
+  - name: Install missing dependencies
+    become: yes
+    apt:
+      state: fixed
+
+  - name: Reboot
+    become: yes
+    reboot:
+      reboot_timeout: 120
