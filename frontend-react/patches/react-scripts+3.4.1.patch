@@ -1,0 +1,45 @@
+diff --git a/node_modules/react-scripts/config/webpack.config.js b/node_modules/react-scripts/config/webpack.config.js
+index 25840d9..0b9636b 100644
+--- a/node_modules/react-scripts/config/webpack.config.js
++++ b/node_modules/react-scripts/config/webpack.config.js
+@@ -36,6 +36,7 @@ const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
+ const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
+ // @remove-on-eject-end
+ const postcssNormalize = require('postcss-normalize');
++const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
+ 
+ const appPackageJson = require(paths.appPackageJson);
+ 
+@@ -699,6 +700,32 @@ module.exports = function(webpackEnv) {
+           // The formatter is invoked directly in WebpackDevServerUtils during development
+           formatter: isEnvProduction ? typescriptFormatter : undefined,
+         }),
++        isEnvProduction && new FaviconsWebpackPlugin({
++          logo: './logo.svg',
++          prefix: '',
++          mode: 'webapp',
++          favicons: {
++            appName: "Musik",
++            appShortName: "Musik",
++            background: "#636363",
++            theme_color: "#ffffff",
++            display: "standalone",
++            orientation: "any",
++            scope: "/",
++            start_url: "/",
++            pixel_art: false,
++            icons: {
++                android: true,
++                appleIcon: { offset: 8 },
++                appleStartup: true,
++                coast: true,
++                favicons: true,
++                firefox: true,
++                windows: { offset: 16 },
++                yandex: true
++            }
++          }
++        }),
+     ].filter(Boolean),
+     // Some libraries import Node modules but don't use them in the browser.
+     // Tell webpack to provide empty mocks for them so importing them works.
