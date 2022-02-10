@@ -21,7 +21,7 @@
   "devDependencies": {
     "@types/react-router-dom": "^5.1.7",
     "favicons-webpack-plugin": "^4.2.0",
-    "node-sass": "4",
+    "node-sass": "7",
     "patch-package": "^6.2.2",
     "postinstall-postinstall": "^2.1.0"
   },
