@@ -167,7 +167,11 @@ func snapServersHandler(w http.ResponseWriter, r *http.Request) {
 func mopidyServersHandler(w http.ResponseWriter, r *http.Request) {
 	mopidyServersMu.RLock()
 	defer mopidyServersMu.RUnlock()
-	writeJSON(w, mopidyServers)
+	if mopidyServers == nil {
+		writeJSON(w, []MopidyServer{})
+	} else {
+		writeJSON(w, mopidyServers)
+	}
 }
 
 func clientSettingsHandler(w http.ResponseWriter, r *http.Request) {
