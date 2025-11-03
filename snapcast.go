@@ -58,16 +58,20 @@ func (s *SnapServer) connect(ctx context.Context) {
 			// Initial status sync
 			s.syncStatus()
 
-			// Keep connection alive and handle disconnections
+			// Keep connection alive and handle incoming messages
 			buf := make([]byte, 8192)
 			for {
 				conn.SetReadDeadline(time.Now().Add(90 * time.Second))
-				_, err := conn.Read(buf)
+				n, err := conn.Read(buf)
 				if err != nil {
 					log.Printf("Connection to Snapcast server at %s:%d lost: %v", s.Host, s.Port, err)
 					conn.Close()
 					s.conn = nil
 					break
+				}
+				// Log received data for debugging
+				if n > 0 {
+					log.Printf("Received %d bytes from Snapcast server", n)
 				}
 			}
 
@@ -111,17 +115,23 @@ func (s *SnapServer) syncStatus() {
 		// Parse groups and clients
 		if groupsData, ok := serverData["groups"].([]interface{}); ok {
 			clients := []Client{}
+			clientGroups := make(map[string]string)
 			for _, groupData := range groupsData {
 				if group, ok := groupData.(map[string]interface{}); ok {
 					streamID := getString(group, "stream_id")
+					groupID := getString(group, "id")
 					if clientsData, ok := group["clients"].([]interface{}); ok {
 						for _, clientData := range clientsData {
 							if clientMap, ok := clientData.(map[string]interface{}); ok {
+								clientID := getString(clientMap, "id")
 								client := Client{
-									ID:        getString(clientMap, "id"),
+									ID:        clientID,
 									Connected: getBool(clientMap, "connected"),
 									Stream:    streamID,
 								}
+
+								// Cache the client-to-group mapping
+								clientGroups[clientID] = groupID
 
 								// Parse config
 								if config, ok := clientMap["config"].(map[string]interface{}); ok {
@@ -145,6 +155,7 @@ func (s *SnapServer) syncStatus() {
 				}
 			}
 			s.Clients = clients
+			s.clientGroups = clientGroups
 		}
 	}
 }
@@ -206,43 +217,15 @@ func (s *SnapServer) setClientStream(clientID string, streamID string) error {
 		return fmt.Errorf("not connected to server")
 	}
 
-	// First, find the group ID for this client
-	groupID := ""
-	for _, client := range s.Clients {
-		if client.ID == clientID {
-			// We need to get the group from the full status
-			status, err := s.conn.request("Server.GetStatus", nil)
-			if err != nil {
-				return err
-			}
-
-			if serverData, ok := status["server"].(map[string]interface{}); ok {
-				if groupsData, ok := serverData["groups"].([]interface{}); ok {
-					for _, groupData := range groupsData {
-						if group, ok := groupData.(map[string]interface{}); ok {
-							if clientsData, ok := group["clients"].([]interface{}); ok {
-								for _, clientData := range clientsData {
-									if clientMap, ok := clientData.(map[string]interface{}); ok {
-										if getString(clientMap, "id") == clientID {
-											groupID = getString(group, "id")
-											break
-										}
-									}
-								}
-							}
-							if groupID != "" {
-								break
-							}
-						}
-					}
-				}
-			}
-			break
+	// Get the group ID from the cache
+	groupID, exists := s.clientGroups[clientID]
+	if !exists {
+		// If not in cache, refresh status and try again
+		s.syncStatus()
+		groupID, exists = s.clientGroups[clientID]
+		if !exists {
+			return fmt.Errorf("could not find group for client %s", clientID)
 		}
-	}
-
-	if groupID == "" {
-		return fmt.Errorf("could not find group for client %s", clientID)
 	}
 
 	_, err := s.conn.request("Group.SetStream", map[string]interface{}{
@@ -284,25 +267,35 @@ func (c *SnapcastConnection) request(method string, params map[string]interface{
 		return nil, err
 	}
 
-	// Read response
+	// Read response - accumulate data until we have a complete JSON message
 	c.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	buf := make([]byte, 65536)
-	n, err := c.conn.Read(buf)
-	if err != nil {
-		return nil, err
+	totalRead := 0
+	
+	for {
+		n, err := c.conn.Read(buf[totalRead:])
+		if err != nil {
+			return nil, err
+		}
+		totalRead += n
+		
+		// Try to parse JSON - if successful, we have a complete message
+		var resp SnapcastResponse
+		err = json.Unmarshal(buf[:totalRead], &resp)
+		if err == nil {
+			// Successfully parsed
+			if resp.Error != nil {
+				return nil, fmt.Errorf("snapcast error: %s", resp.Error.Message)
+			}
+			return resp.Result, nil
+		}
+		
+		// If buffer is full and still can't parse, something is wrong
+		if totalRead >= len(buf) {
+			return nil, fmt.Errorf("response too large or invalid JSON")
+		}
 	}
 
-	var resp SnapcastResponse
-	err = json.Unmarshal(buf[:n], &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Error != nil {
-		return nil, fmt.Errorf("snapcast error: %s", resp.Error.Message)
-	}
-
-	return resp.Result, nil
 }
 
 func getString(m map[string]interface{}, key string) string {

@@ -32,11 +32,12 @@ var (
 )
 
 type SnapServer struct {
-	Host    string
-	Port    int
-	Clients []Client `json:"clients"`
-	Streams []Stream `json:"streams"`
-	conn    *SnapcastConnection
+	Host         string
+	Port         int
+	Clients      []Client `json:"clients"`
+	Streams      []Stream `json:"streams"`
+	conn         *SnapcastConnection
+	clientGroups map[string]string // maps client ID to group ID
 }
 
 type Client struct {
@@ -74,7 +75,7 @@ func main() {
 	flag.Parse()
 
 	// Set up logging
-	logFile, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile("server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 	if err != nil {
 		log.Printf("Failed to open log file: %v", err)
 	} else {
@@ -387,10 +388,11 @@ func discoverSnapcastServers(ctx context.Context) {
 					if _, exists := snapServers[name]; !exists {
 						log.Printf("Discovered Snapcast server: %s at %s:%d", name, host, port)
 						server := &SnapServer{
-							Host:    host,
-							Port:    port,
-							Clients: []Client{},
-							Streams: []Stream{},
+							Host:         host,
+							Port:         port,
+							Clients:      []Client{},
+							Streams:      []Stream{},
+							clientGroups: make(map[string]string),
 						}
 						snapServers[name] = server
 						go server.connect(ctx)
