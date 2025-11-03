@@ -1,6 +1,9 @@
 /server.log
 /ansible/snap*.deb
 
+# Go binary
+snapcast-control
+
 # Created by https://www.gitignore.io/api/python,vagrant
 
 ### Python ###
