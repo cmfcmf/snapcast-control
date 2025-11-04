@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   react-scripts@5.0.1:
-    hash: 01b9e7dc3452496e4505f7f2ea08363fd6e4258c206b9e6118a6908df3caba3b
+    hash: ed95436d2d23fa5d2fa16097f026313061e3e0f0fb0260bf4ce1d6852161e3ad
     path: patches/react-scripts@5.0.1.patch
 
 importers:
@@ -51,7 +51,7 @@ importers:
         version: 5.2.0(react@16.14.0)
       react-scripts:
         specifier: 5.0.1
-        version: 5.0.1(patch_hash=01b9e7dc3452496e4505f7f2ea08363fd6e4258c206b9e6118a6908df3caba3b)(@babel/plugin-syntax-flow@7.27.1(@babel/core@7.28.5))(@babel/plugin-transform-react-jsx@7.27.1(@babel/core@7.28.5))(@types/babel__core@7.20.5)(@types/webpack@4.41.26)(eslint@8.57.1)(node-sass@4.14.1)(react@16.14.0)(rework-visit@1.0.0)(rework@1.0.1)(sass@1.93.3)(sockjs-client@1.4.0)(type-fest@0.20.2)(typescript@4.1.3)
+        version: 5.0.1(patch_hash=ed95436d2d23fa5d2fa16097f026313061e3e0f0fb0260bf4ce1d6852161e3ad)(@babel/plugin-syntax-flow@7.27.1(@babel/core@7.28.5))(@babel/plugin-transform-react-jsx@7.27.1(@babel/core@7.28.5))(@types/babel__core@7.20.5)(@types/webpack@4.41.26)(eslint@8.57.1)(node-sass@4.14.1)(react@16.14.0)(rework-visit@1.0.0)(rework@1.0.1)(sass@1.93.3)(sockjs-client@1.4.0)(type-fest@0.20.2)(typescript@4.1.3)
       rxjs:
         specifier: ^6.6.3
         version: 6.6.3
@@ -13963,7 +13963,7 @@ snapshots:
       tiny-invariant: 1.1.0
       tiny-warning: 1.0.3
 
-  react-scripts@5.0.1(patch_hash=01b9e7dc3452496e4505f7f2ea08363fd6e4258c206b9e6118a6908df3caba3b)(@babel/plugin-syntax-flow@7.27.1(@babel/core@7.28.5))(@babel/plugin-transform-react-jsx@7.27.1(@babel/core@7.28.5))(@types/babel__core@7.20.5)(@types/webpack@4.41.26)(eslint@8.57.1)(node-sass@4.14.1)(react@16.14.0)(rework-visit@1.0.0)(rework@1.0.1)(sass@1.93.3)(sockjs-client@1.4.0)(type-fest@0.20.2)(typescript@4.1.3):
+  react-scripts@5.0.1(patch_hash=ed95436d2d23fa5d2fa16097f026313061e3e0f0fb0260bf4ce1d6852161e3ad)(@babel/plugin-syntax-flow@7.27.1(@babel/core@7.28.5))(@babel/plugin-transform-react-jsx@7.27.1(@babel/core@7.28.5))(@types/babel__core@7.20.5)(@types/webpack@4.41.26)(eslint@8.57.1)(node-sass@4.14.1)(react@16.14.0)(rework-visit@1.0.0)(rework@1.0.1)(sass@1.93.3)(sockjs-client@1.4.0)(type-fest@0.20.2)(typescript@4.1.3):
     dependencies:
       '@babel/core': 7.28.5
       '@pmmmwh/react-refresh-webpack-plugin': 0.5.17(@types/webpack@4.41.26)(react-refresh@0.11.0)(sockjs-client@1.4.0)(type-fest@0.20.2)(webpack-dev-server@4.15.2(webpack@5.102.1))(webpack@5.102.1)

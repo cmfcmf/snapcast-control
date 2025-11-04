@@ -1,5 +1,5 @@
 diff --git a/config/webpack.config.js b/config/webpack.config.js
-index e465d8e7a00ec889e9c4c29ba7812019f8319a41..ba899153dfdfd9a52cab9039b1013b51f046784e 100644
+index e465d8e7a00ec889e9c4c29ba7812019f8319a41..7809717a4218aff6abcd4e4bef33626919de9b30 100644
 --- a/config/webpack.config.js
 +++ b/config/webpack.config.js
 @@ -37,6 +37,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
