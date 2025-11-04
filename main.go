@@ -53,7 +53,7 @@ type Client struct {
 type Stream struct {
 	ID     string                 `json:"id"`
 	Status string                 `json:"status"`
-	Meta   map[string]interface{} `json:"meta"`
+	Meta   map[string]any `json:"meta"`
 }
 
 type MopidyServer struct {
@@ -129,7 +129,9 @@ func main() {
 		cancel()
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
-		server.Shutdown(shutdownCtx)
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
 	}()
 
 	log.Printf("Starting web server on port %d", *port)
@@ -151,7 +153,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func writeJSON(w http.ResponseWriter, data interface{}) {
+func writeJSON(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Printf("Error encoding JSON: %v", err)
@@ -219,7 +221,7 @@ func clientSettingsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, map[string]interface{}{})
+	writeJSON(w, map[string]any{})
 }
 
 func browseHandler(w http.ResponseWriter, r *http.Request) {
@@ -246,11 +248,11 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var params map[string]interface{}
+	var params map[string]any
 	if uri != "" {
-		params = map[string]interface{}{"uri": uri}
+		params = map[string]any{"uri": uri}
 	} else {
-		params = map[string]interface{}{"uri": nil}
+		params = map[string]any{"uri": nil}
 	}
 
 	result, err := mopidyRPCRequest(mopidyServer, "core.library.browse", params)
@@ -296,7 +298,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add tracks
-	tracks, err := mopidyRPCRequest(mopidyServer, "core.tracklist.add", map[string]interface{}{
+	tracks, err := mopidyRPCRequest(mopidyServer, "core.tracklist.add", map[string]any{
 		"uris": uris,
 	})
 	if err != nil {
@@ -306,12 +308,12 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Play first track
-	tracksArray, ok := tracks.([]interface{})
+	tracksArray, ok := tracks.([]any)
 	if ok && len(tracksArray) > 0 {
-		firstTrack, ok := tracksArray[0].(map[string]interface{})
+		firstTrack, ok := tracksArray[0].(map[string]any)
 		if ok {
 			tlid := firstTrack["tlid"]
-			_, err = mopidyRPCRequest(mopidyServer, "core.playback.play", map[string]interface{}{
+			_, err = mopidyRPCRequest(mopidyServer, "core.playback.play", map[string]any{
 				"tlid": tlid,
 			})
 			if err != nil {
@@ -322,7 +324,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, map[string]interface{}{})
+	writeJSON(w, map[string]any{})
 }
 
 func stopHandler(w http.ResponseWriter, r *http.Request) {
@@ -362,7 +364,7 @@ func stopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, map[string]interface{}{})
+	writeJSON(w, map[string]any{})
 }
 
 func discoverSnapcastServers(ctx context.Context) {

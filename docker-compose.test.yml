@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  snapserver:
+    image: hotio/snapserver:latest
+    container_name: snapserver-test
+    ports:
+      - "1704:1704"
+      - "1705:1705"
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /tmp/snapcast:/config
+    command: |
+      --stream.stream=pipe:///tmp/snapfifo?name=default&mode=read
+
+  snapclient:
+    image: hotio/snapclient:latest
+    container_name: snapclient-test
+    depends_on:
+      - snapserver
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - SNAPCLIENT_OPTS=--host snapserver
+    command: --host snapserver
+
+  snapcast-control:
+    build: .
+    container_name: snapcast-control-test
+    depends_on:
+      - snapserver
+      - snapclient
+    ports:
+      - "8080:8080"
+    network_mode: "host"
+    environment:
+      - SNAPCAST_HOST=localhost
+      - SNAPCAST_PORT=1705

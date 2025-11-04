@@ -20,13 +20,13 @@ type SnapcastRequest struct {
 	ID      int                    `json:"id"`
 	JSONRpc string                 `json:"jsonrpc"`
 	Method  string                 `json:"method"`
-	Params  map[string]interface{} `json:"params,omitempty"`
+	Params  map[string]any `json:"params,omitempty"`
 }
 
 type SnapcastResponse struct {
 	ID      int                    `json:"id"`
 	JSONRpc string                 `json:"jsonrpc"`
-	Result  map[string]interface{} `json:"result,omitempty"`
+	Result  map[string]any `json:"result,omitempty"`
 	Error   *SnapcastError         `json:"error,omitempty"`
 }
 
@@ -61,7 +61,10 @@ func (s *SnapServer) connect(ctx context.Context) {
 			// Keep connection alive and handle incoming messages
 			buf := make([]byte, 8192)
 			for {
-				conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+				if err := conn.SetReadDeadline(time.Now().Add(90 * time.Second)); err != nil {
+					log.Printf("Failed to set read deadline: %v", err)
+					break
+				}
 				n, err := conn.Read(buf)
 				if err != nil {
 					log.Printf("Connection to Snapcast server at %s:%d lost: %v", s.Host, s.Port, err)
@@ -92,18 +95,18 @@ func (s *SnapServer) syncStatus() {
 	}
 
 	// Parse server status
-	if serverData, ok := status["server"].(map[string]interface{}); ok {
+	if serverData, ok := status["server"].(map[string]any); ok {
 		// Parse streams
-		if streamsData, ok := serverData["streams"].([]interface{}); ok {
+		if streamsData, ok := serverData["streams"].([]any); ok {
 			streams := make([]Stream, 0, len(streamsData))
 			for _, streamData := range streamsData {
-				if stream, ok := streamData.(map[string]interface{}); ok {
+				if stream, ok := streamData.(map[string]any); ok {
 					streamObj := Stream{
 						ID:     getString(stream, "id"),
 						Status: getString(stream, "status"),
-						Meta:   make(map[string]interface{}),
+						Meta:   make(map[string]any),
 					}
-					if meta, ok := stream["meta"].(map[string]interface{}); ok {
+					if meta, ok := stream["meta"].(map[string]any); ok {
 						streamObj.Meta = meta
 					}
 					streams = append(streams, streamObj)
@@ -113,16 +116,16 @@ func (s *SnapServer) syncStatus() {
 		}
 
 		// Parse groups and clients
-		if groupsData, ok := serverData["groups"].([]interface{}); ok {
+		if groupsData, ok := serverData["groups"].([]any); ok {
 			clients := []Client{}
 			clientGroups := make(map[string]string)
 			for _, groupData := range groupsData {
-				if group, ok := groupData.(map[string]interface{}); ok {
+				if group, ok := groupData.(map[string]any); ok {
 					streamID := getString(group, "stream_id")
 					groupID := getString(group, "id")
-					if clientsData, ok := group["clients"].([]interface{}); ok {
+					if clientsData, ok := group["clients"].([]any); ok {
 						for _, clientData := range clientsData {
-							if clientMap, ok := clientData.(map[string]interface{}); ok {
+							if clientMap, ok := clientData.(map[string]any); ok {
 								clientID := getString(clientMap, "id")
 								client := Client{
 									ID:        clientID,
@@ -134,15 +137,15 @@ func (s *SnapServer) syncStatus() {
 								clientGroups[clientID] = groupID
 
 								// Parse config
-								if config, ok := clientMap["config"].(map[string]interface{}); ok {
+								if config, ok := clientMap["config"].(map[string]any); ok {
 									client.Name = getString(config, "name")
 									if client.Name == "" {
-										if host, ok := clientMap["host"].(map[string]interface{}); ok {
+										if host, ok := clientMap["host"].(map[string]any); ok {
 											client.Name = getString(host, "name")
 										}
 									}
 									client.Latency = getInt(config, "latency")
-									if volume, ok := config["volume"].(map[string]interface{}); ok {
+									if volume, ok := config["volume"].(map[string]any); ok {
 										client.Volume = getInt(volume, "percent")
 										client.Muted = getBool(volume, "muted")
 									}
@@ -165,9 +168,9 @@ func (s *SnapServer) setClientMuted(clientID string, muted bool) error {
 		return fmt.Errorf("not connected to server")
 	}
 
-	_, err := s.conn.request("Client.SetVolume", map[string]interface{}{
+	_, err := s.conn.request("Client.SetVolume", map[string]any{
 		"id": clientID,
-		"volume": map[string]interface{}{
+		"volume": map[string]any{
 			"muted": muted,
 		},
 	})
@@ -184,7 +187,7 @@ func (s *SnapServer) setClientLatency(clientID string, latency int) error {
 		return fmt.Errorf("not connected to server")
 	}
 
-	_, err := s.conn.request("Client.SetLatency", map[string]interface{}{
+	_, err := s.conn.request("Client.SetLatency", map[string]any{
 		"id":      clientID,
 		"latency": latency,
 	})
@@ -201,7 +204,7 @@ func (s *SnapServer) deleteClient(clientID string) error {
 		return fmt.Errorf("not connected to server")
 	}
 
-	_, err := s.conn.request("Server.DeleteClient", map[string]interface{}{
+	_, err := s.conn.request("Server.DeleteClient", map[string]any{
 		"id": clientID,
 	})
 	if err != nil {
@@ -228,7 +231,7 @@ func (s *SnapServer) setClientStream(clientID string, streamID string) error {
 		}
 	}
 
-	_, err := s.conn.request("Group.SetStream", map[string]interface{}{
+	_, err := s.conn.request("Group.SetStream", map[string]any{
 		"id":     groupID,
 		"stream": streamID,
 	})
@@ -240,7 +243,7 @@ func (s *SnapServer) setClientStream(clientID string, streamID string) error {
 	return nil
 }
 
-func (c *SnapcastConnection) request(method string, params map[string]interface{}) (map[string]interface{}, error) {
+func (c *SnapcastConnection) request(method string, params map[string]any) (map[string]any, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -261,14 +264,18 @@ func (c *SnapcastConnection) request(method string, params map[string]interface{
 
 	data = append(data, '\n')
 
-	c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	if err := c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		return nil, err
+	}
 	_, err = c.conn.Write(data)
 	if err != nil {
 		return nil, err
 	}
 
 	// Read response - accumulate data until we have a complete JSON message
-	c.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	if err := c.conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		return nil, err
+	}
 	buf := make([]byte, 65536)
 	totalRead := 0
 	
@@ -298,21 +305,21 @@ func (c *SnapcastConnection) request(method string, params map[string]interface{
 
 }
 
-func getString(m map[string]interface{}, key string) string {
+func getString(m map[string]any, key string) string {
 	if v, ok := m[key].(string); ok {
 		return v
 	}
 	return ""
 }
 
-func getInt(m map[string]interface{}, key string) int {
+func getInt(m map[string]any, key string) int {
 	if v, ok := m[key].(float64); ok {
 		return int(v)
 	}
 	return 0
 }
 
-func getBool(m map[string]interface{}, key string) bool {
+func getBool(m map[string]any, key string) bool {
 	if v, ok := m[key].(bool); ok {
 		return v
 	}

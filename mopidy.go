@@ -12,21 +12,21 @@ import (
 type MopidyRPCRequest struct {
 	Method  string                 `json:"method"`
 	JSONRpc string                 `json:"jsonrpc"`
-	Params  map[string]interface{} `json:"params,omitempty"`
+	Params  map[string]any `json:"params,omitempty"`
 	ID      int                    `json:"id"`
 }
 
 type MopidyRPCResponse struct {
 	JSONRpc string      `json:"jsonrpc"`
 	ID      int         `json:"id"`
-	Result  interface{} `json:"result,omitempty"`
+	Result  any `json:"result,omitempty"`
 	Error   *struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
 	} `json:"error,omitempty"`
 }
 
-func mopidyRPCRequest(server *MopidyServer, method string, params map[string]interface{}) (interface{}, error) {
+func mopidyRPCRequest(server *MopidyServer, method string, params map[string]any) (any, error) {
 	req := MopidyRPCRequest{
 		Method:  method,
 		JSONRpc: "2.0",
@@ -35,7 +35,7 @@ func mopidyRPCRequest(server *MopidyServer, method string, params map[string]int
 	}
 
 	if req.Params == nil {
-		req.Params = make(map[string]interface{})
+		req.Params = make(map[string]any)
 	}
 
 	body, err := json.Marshal(req)

@@ -3,6 +3,12 @@
 
 # Go binary
 snapcast-control
+snapcast-control-*
+
+# Go test files
+*.test
+coverage.out
+coverage.html
 
 # Created by https://www.gitignore.io/api/python,vagrant
 
