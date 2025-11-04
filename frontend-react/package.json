@@ -49,5 +49,10 @@
     ]
   },
   "proxy": "http://localhost:8080",
-  "postinstall": "patch-package"
+  "postinstall": "patch-package",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@10.20.0"
 }
