@@ -40,35 +40,25 @@ golangci-lint run --timeout 5m
 
 ## Integration Tests
 
-Integration tests require a running Snapcast server instance.
+Integration tests automatically start a Snapcast server using [testcontainers-go](https://golang.testcontainers.org/).
 
-### Using Docker Compose
+### Running Integration Tests
 
-Start the test environment:
-
-```bash
-docker-compose -f docker-compose.test.yml up -d
-```
-
-Run integration tests:
+Simply run:
 
 ```bash
-SNAPCAST_HOST=localhost SNAPCAST_PORT=1705 go test -tags=integration -v ./...
+go test -tags=integration -v ./...
 ```
 
-Stop the test environment:
+**Requirements:**
+- Docker must be installed and running
+- The tests will automatically:
+  - Pull the `saiyato/snapserver` Docker image (if not cached)
+  - Start a Snapcast server container
+  - Run tests against the container
+  - Clean up the container after tests complete
 
-```bash
-docker-compose -f docker-compose.test.yml down
-```
-
-### Using a Real Snapcast Server
-
-If you have a Snapcast server running:
-
-```bash
-SNAPCAST_HOST=your-server-ip SNAPCAST_PORT=1705 go test -tags=integration -v ./...
-```
+No manual setup required!
 
 ### Manual Integration Testing
 

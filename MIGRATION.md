@@ -95,26 +95,21 @@ Example:
 ./snapcast-control --debug --port 8080
 ```
 
-## Old Python Files
-
-The following files are kept for reference but are no longer used:
-- `server.py`
-- `serializer.py`
-- `requirements.txt`
-
-These can be safely removed if desired, but are kept to preserve project history.
-
 ## Testing
 
 The implementation has been:
-- Code reviewed and improvements made
+- Fully tested with comprehensive unit tests (see `*_test.go` files)
+- Integration tests available for testing with real Snapcast instances (see `integration_test.go`)
+- CI/CD pipeline set up with GitHub Actions (`.github/workflows/go.yml`)
+- Code reviewed and linter-verified with golangci-lint
 - Security scanned with CodeQL (0 vulnerabilities)
 - Functionally tested with all endpoints
 - Verified for API compatibility with existing frontend
 
+See `TESTING.md` for complete testing documentation.
+
 ## Future Considerations
 
 - The frontend build currently needs to be created before building the Go binary
-- Consider adding automated tests
-- Consider adding CI/CD pipelines for automated builds
 - The CORS policy is currently permissive (*) - may want to make this configurable for production use
+- Consider adding more comprehensive integration tests with mock Snapcast/Mopidy servers

@@ -5,37 +5,72 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
 	"testing"
 	"time"
+
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// These tests require a running snapcast server
+// These tests use testcontainers to automatically start a snapcast server
 // Run with: go test -tags=integration -v
+
+func setupSnapcastContainer(ctx context.Context) (testcontainers.Container, string, int, error) {
+	req := testcontainers.ContainerRequest{
+		Image:        "saiyato/snapserver:latest",
+		ExposedPorts: []string{"1705/tcp"},
+		WaitingFor:   wait.ForListeningPort("1705/tcp").WithStartupTimeout(30 * time.Second),
+	}
+
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	host, err := container.Host(ctx)
+	if err != nil {
+		container.Terminate(ctx)
+		return nil, "", 0, err
+	}
+
+	port, err := container.MappedPort(ctx, "1705")
+	if err != nil {
+		container.Terminate(ctx)
+		return nil, "", 0, err
+	}
+
+	return container, host, port.Int(), nil
+}
 
 func TestIntegrationSnapcastConnection(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	// Check if SNAPCAST_HOST is set
-	host := os.Getenv("SNAPCAST_HOST")
-	if host == "" {
-		t.Skip("SNAPCAST_HOST environment variable not set, skipping integration test")
-	}
+	ctx := context.Background()
 
-	port := 1705
-	if portStr := os.Getenv("SNAPCAST_PORT"); portStr != "" {
-		fmt.Sscanf(portStr, "%d", &port)
+	// Start snapcast server container
+	container, host, port, err := setupSnapcastContainer(ctx)
+	if err != nil {
+		t.Fatalf("Failed to start snapcast container: %v", err)
 	}
+	defer container.Terminate(ctx)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	t.Logf("Snapcast server running at %s:%d", host, port)
+
+	// Give the server a moment to fully initialize
+	time.Sleep(2 * time.Second)
 
 	// Create a test server
+	testCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	server := &SnapServer{
 		Host:         host,
 		Port:         port,
@@ -45,7 +80,7 @@ func TestIntegrationSnapcastConnection(t *testing.T) {
 	}
 
 	// Try to connect
-	go server.connect(ctx)
+	go server.connect(testCtx)
 
 	// Wait for connection
 	time.Sleep(2 * time.Second)
@@ -62,6 +97,11 @@ func TestIntegrationSnapcastConnection(t *testing.T) {
 
 	if len(server.Streams) > 0 {
 		t.Logf("First stream: %+v", server.Streams[0])
+	}
+
+	// Verify we got at least one stream
+	if len(server.Streams) == 0 {
+		t.Error("Expected at least one stream from snapcast server")
 	}
 }
 

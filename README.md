@@ -7,7 +7,7 @@ It allows you select which stream is played on which client.
 It also has support to select local radio and files from Mopidy instances.
 Currently, the UI is in German. If you are interested in using an English version, please open an issue.
 
-**Note:** The backend has been rewritten in Go while the React frontend remains unchanged. The frontend is embedded into the Go binary using go:embed. The old Python files (server.py, serializer.py, requirements.txt) are kept for reference but are no longer used.
+**Note:** The backend has been rewritten in Go while the React frontend remains unchanged. The frontend is embedded into the Go binary using go:embed.
 
 ## Installation
 

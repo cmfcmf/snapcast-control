@@ -32,6 +32,9 @@ jobs:
     - name: Test
       run: go test -v ./...
 
+    - name: Integration Tests
+      run: go test -tags=integration -v ./...
+
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
