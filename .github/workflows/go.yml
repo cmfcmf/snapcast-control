@@ -26,6 +26,12 @@ jobs:
         mkdir -p frontend-react/build
         echo '<!DOCTYPE html><html><body><h1>Snapcast Control</h1></body></html>' > frontend-react/build/index.html
 
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout 5m
+
     - name: Build
       run: go build -v ./...
 
@@ -34,9 +40,3 @@ jobs:
 
     - name: Integration Tests
       run: go test -tags=integration -v ./...
-
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: latest
-        args: --timeout 5m

@@ -41,7 +41,9 @@ func TestMopidyRPCRequest(t *testing.T) {
 			Result:  []any{map[string]any{"name": "Test Item"}},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
 	}))
 	defer testServer.Close()
 
@@ -77,7 +79,9 @@ func TestMopidyRPCError(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
 	}))
 	defer testServer.Close()
 
