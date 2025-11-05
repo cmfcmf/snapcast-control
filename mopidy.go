@@ -10,16 +10,16 @@ import (
 )
 
 type MopidyRPCRequest struct {
-	Method  string                 `json:"method"`
-	JSONRpc string                 `json:"jsonrpc"`
+	Method  string         `json:"method"`
+	JSONRpc string         `json:"jsonrpc"`
 	Params  map[string]any `json:"params,omitempty"`
-	ID      int                    `json:"id"`
+	ID      int            `json:"id"`
 }
 
 type MopidyRPCResponse struct {
-	JSONRpc string      `json:"jsonrpc"`
-	ID      int         `json:"id"`
-	Result  any `json:"result,omitempty"`
+	JSONRpc string `json:"jsonrpc"`
+	ID      int    `json:"id"`
+	Result  any    `json:"result,omitempty"`
 	Error   *struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`

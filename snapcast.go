@@ -17,17 +17,17 @@ type SnapcastConnection struct {
 }
 
 type SnapcastRequest struct {
-	ID      int                    `json:"id"`
-	JSONRpc string                 `json:"jsonrpc"`
-	Method  string                 `json:"method"`
+	ID      int            `json:"id"`
+	JSONRpc string         `json:"jsonrpc"`
+	Method  string         `json:"method"`
 	Params  map[string]any `json:"params,omitempty"`
 }
 
 type SnapcastResponse struct {
-	ID      int                    `json:"id"`
-	JSONRpc string                 `json:"jsonrpc"`
+	ID      int            `json:"id"`
+	JSONRpc string         `json:"jsonrpc"`
 	Result  map[string]any `json:"result,omitempty"`
-	Error   *SnapcastError         `json:"error,omitempty"`
+	Error   *SnapcastError `json:"error,omitempty"`
 }
 
 type SnapcastError struct {
@@ -278,14 +278,14 @@ func (c *SnapcastConnection) request(method string, params map[string]any) (map[
 	}
 	buf := make([]byte, 65536)
 	totalRead := 0
-	
+
 	for {
 		n, err := c.conn.Read(buf[totalRead:])
 		if err != nil {
 			return nil, err
 		}
 		totalRead += n
-		
+
 		// Try to parse JSON - if successful, we have a complete message
 		var resp SnapcastResponse
 		err = json.Unmarshal(buf[:totalRead], &resp)
@@ -296,7 +296,7 @@ func (c *SnapcastConnection) request(method string, params map[string]any) (map[
 			}
 			return resp.Result, nil
 		}
-		
+
 		// If buffer is full and still can't parse, something is wrong
 		if totalRead >= len(buf) {
 			return nil, fmt.Errorf("response too large or invalid JSON")

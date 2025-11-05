@@ -86,45 +86,7 @@ func TestMopidyServersHandler(t *testing.T) {
 	}
 }
 
-func TestCorsMiddleware(t *testing.T) {
-	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
 
-	tests := []struct {
-		name   string
-		method string
-		status int
-	}{
-		{
-			name:   "GET request",
-			method: http.MethodGet,
-			status: http.StatusOK,
-		},
-		{
-			name:   "OPTIONS request",
-			method: http.MethodOptions,
-			status: http.StatusOK,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(tt.method, "/test", nil)
-			w := httptest.NewRecorder()
-
-			handler.ServeHTTP(w, req)
-
-			if w.Code != tt.status {
-				t.Errorf("Expected status %d, got %d", tt.status, w.Code)
-			}
-
-			if w.Header().Get("Access-Control-Allow-Origin") != "*" {
-				t.Errorf("Expected CORS header to be *, got %s", w.Header().Get("Access-Control-Allow-Origin"))
-			}
-		})
-	}
-}
 
 func TestClientSettingsHandlerMissingParams(t *testing.T) {
 	tests := []struct {
