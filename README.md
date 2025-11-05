@@ -17,7 +17,7 @@ Currently, the UI is in German. If you are interested in using an English versio
 
 # Build the frontend
 cd frontend-react
-yarn install && yarn build
+pnpm install && pnpm run build
 cd ..
 
 # Build the Go server
@@ -53,7 +53,7 @@ Client:
 
 ```
 cd frontend-react
-yarn install && yarn start
+pnpm install && pnpm run start
 ```
 
 ## Docker
