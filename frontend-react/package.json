@@ -3,24 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@types/node": "^12.0.0",
-    "@types/react": "^16.9.0",
-    "@types/react-dom": "^16.9.0",
-    "abortcontroller-polyfill": "^1.7.1",
-    "bootstrap": "^4.6.0",
-    "clsx": "^1.1.1",
+    "@types/node": "^12.20.55",
+    "@types/react": "^16.14.67",
+    "@types/react-dom": "^16.9.25",
+    "abortcontroller-polyfill": "^1.7.8",
+    "bootstrap": "^4.6.2",
+    "clsx": "^1.2.1",
     "favicons": "^7.2.0",
-    "react": "^16.12.0",
+    "react": "^16.14.0",
     "react-app-polyfill": "^1.0.6",
-    "react-content-loader": "^6.0.1",
-    "react-dom": "^16.12.0",
-    "react-router-dom": "^5.2.0",
+    "react-content-loader": "^6.2.1",
+    "react-dom": "^16.14.0",
+    "react-router-dom": "^5.3.4",
     "react-scripts": "5.0.1",
-    "rxjs": "^6.6.3",
-    "typescript": "~4.1.3"
+    "rxjs": "^6.6.7",
+    "typescript": "~4.1.6"
   },
   "devDependencies": {
-    "@types/react-router-dom": "^5.1.7",
+    "@types/react-router-dom": "^5.3.3",
     "eslint": "^8.57.1",
     "favicons-webpack-plugin": "^6.0.1",
     "sass": "^1.93.3"
@@ -47,10 +47,15 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8080",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@10.20.0"
+  "packageManager": "pnpm@10.20.0",
+  "options": {
+    "proxy": "http://localhost:8080",
+    "allowedHosts": [
+      "localhost"
+    ]
+  }
 }
