@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  snapserver:
+    image: saiyato/snapserver:latest
+    container_name: snapserver-test
+    ports:
+      - "1704:1704"
+      - "1705:1705"
+      - "1780:1780"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1705"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
