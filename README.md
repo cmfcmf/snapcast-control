@@ -14,7 +14,7 @@ sudo apt install python3 python3-pip
 sudo pip3 install -r requirements.txt
 
 cd frontend-react
-yarn install && yarn build
+pnpm install && pnpm run build
 ```
 
 Add an entry to crontab to start snapcast-control after booting:
@@ -42,7 +42,7 @@ Client:
 
 ```
 cd frontend-react
-yarn install && yarn start
+pnpm install && pnpm run start
 ```
 
 ## SnapCast Update

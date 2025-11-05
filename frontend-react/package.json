@@ -52,10 +52,5 @@
     "pnpm": ">=8.0.0"
   },
   "packageManager": "pnpm@10.20.0",
-  "options": {
-    "proxy": "http://localhost:8080",
-    "allowedHosts": [
-      "localhost"
-    ]
-  }
+  "proxy": "http://127.0.0.1:8080"
 }

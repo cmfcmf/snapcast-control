@@ -1,0 +1,2 @@
+patchedDependencies:
+  react-scripts: patches/react-scripts.patch
